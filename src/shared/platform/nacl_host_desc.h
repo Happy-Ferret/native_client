@@ -51,7 +51,7 @@ typedef int64_t nacl_off64_t;
 #if NACL_LINUX
 typedef struct lind_stat nacl_host_stat_t;
 #elif NACL_OSX
-typedef struct lind_stat nacl_host_stat_t;
+typedef struct stat nacl_host_stat_t;
 #elif NACL_WINDOWS
 typedef struct _stati64 nacl_host_stat_t;
 #elif defined __native_client__

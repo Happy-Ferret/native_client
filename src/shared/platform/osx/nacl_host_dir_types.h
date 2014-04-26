@@ -16,14 +16,11 @@
 
 #include "native_client/src/shared/platform/nacl_sync.h"
 
-#define NACL_DIRENT_BUF_BYTES 4096
-
 struct NaClHostDir {
   struct NaClMutex  mu;
-  int               fd;
-  size_t            cur_byte;
-  size_t            nbytes;
-  char              dirent_buf[NACL_DIRENT_BUF_BYTES];
+  DIR               *dirp;
+  struct dirent     *dp;
+  int               off;
 };
 
 #endif  /* NATIVE_CLIENT_SRC_TRUSTED_PLATFORM_OSX_NACL_HOST_DIR_TYPES_H_ */

@@ -385,6 +385,107 @@ struct NaClDescVtbl {
   uint32_t (*GetFlags)(struct NaClDesc *self);
 
   /*
+   * Followings are extended by Lind
+   */
+
+  void (*SelectAdd)(struct NaClDesc *self,
+		                   fd_set* fdset);
+
+  void (*PollWatch)(struct NaClDest* self,
+		            struct pollfd* pfd,
+		            short int event);
+
+  /*
+   * We put "Sock" in front of the function names to avoid
+   * conflicts with functions defined above
+   */
+
+  int (*SockBind)(struct NaClDest* self,
+		           const struct sockaddr *addr,
+		           socklen_t addrlen);
+
+  int (*SockListen)(struct NaClDest* self,
+		             int backlog);
+
+  int (*SockAccept)(struct NaClDest* self,
+		             const struct sockaddr *addr,
+		             socklen_t addrlen,
+		             struct NaClDest** result);
+
+  int (*SockConnect)(struct NaClDest* self,
+		             const struct sockaddr *addr,
+                     socklen_t addrlen);
+
+  int (*SockGetPeerName)(struct NaClDest* self,
+		                 struct sockaddr *addr,
+		                 socklen_t *addrlen);
+
+  int (*SockGetSockName)(struct NaClDest* self,
+		                 struct sockaddr *addr,
+		                 socklen_t *addrlen);
+
+  ssize_t (*SockSend)(struct NaClDest* self,
+		           const void *buf,
+		           size_t len,
+		           int flags);
+
+  ssize_t (*SockSendTo)(struct NaClDest* self,
+		             const void *buf,
+		             size_t len,
+		             int flags,
+                     const struct sockaddr *dest_addr,
+                     socklen_t addrlen);
+
+  ssize_t (*SockSendMsg)(struct NaClDest* self,
+		              const struct msghdr *msg,
+		              int flags);
+
+  ssize_t (*SockRecv)(struct NaClDest* self,
+		           void *buf,
+		           size_t len,
+		           int flags);
+
+  ssize_t (*SockRecvFrom)(struct NaClDest* self,
+		               void *buf,
+		               size_t len,
+		               int flags,
+                       struct sockaddr *src_addr,
+                       socklen_t *addrlen);
+
+  ssize_t (*SockRecvMsg)(struct NaClDest* self,
+		              struct msghdr *msg,
+		              int flags);
+
+
+
+  int (*SockEpollCtrl)(struct NaClDest* self,
+		                int op,
+		                struct NaClDest* fd,
+		                struct epoll_event *event);
+
+  int (*SockEpollWait)(struct NaClDest* self,
+		                struct epoll_event *events,
+                        int maxevents,
+                        int timeout);
+
+  int (*SockGetSockOpt)(struct NaClDest* self,
+		                int level,
+		                int optname,
+				        void *optval,
+				        socklen_t *optlen);
+
+   int (*SockSetSockOpt)(struct NaClDest* self,
+		                 int level,
+		                 int optname,
+				         const void *optval,
+				         socklen_t optlen);
+
+   int (*Fcntl)(struct NaClDest* self,
+		        int cmd,
+		        int flag,
+		        struct NaClDest** fd);
+
+  /*
    * Inappropriate methods for the subclass will just return
    * -NACL_ABI_EINVAL.
    */

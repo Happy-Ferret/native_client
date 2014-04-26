@@ -492,7 +492,7 @@ int NaClHostDescFstat(struct NaClHostDesc  *d,
     return -errno;
   }
 #elif NACL_OSX
-  if (lind_fxstat(d->d, 1, nhsp) == -1) {
+  if (fxstat(d->d, 1, nhsp) == -1) {
     return -errno;
   }
 #else
@@ -536,31 +536,247 @@ int NaClHostDescStat(char const       *host_os_pathname,
 }
 
 int NaClHostDescMkdir(const char *path, int mode) {
-  if (mkdir(path, mode) != 0)
+  if (lind_mkdir(path, mode) != 0)
     return -NaClXlateErrno(errno);
   return 0;
 }
 
 int NaClHostDescRmdir(const char *path) {
-  if (rmdir(path) != 0)
+  if (lind_rmdir(path) != 0)
     return -NaClXlateErrno(errno);
   return 0;
 }
 
 int NaClHostDescChdir(const char *path) {
-  if (chdir(path) != 0)
+  if (lind_chdir(path) != 0)
     return -NaClXlateErrno(errno);
   return 0;
 }
 
 int NaClHostDescGetcwd(char *path, size_t len) {
-  if (getcwd(path, len) == NULL)
+  if (lind_getcwd(path, len) == NULL)
     return -NaClXlateErrno(errno);
   return 0;
 }
 
 int NaClHostDescUnlink(const char *path) {
-  if (unlink(path) != 0)
+  if (lind_unlink(path) != 0)
     return -errno;
   return 0;
+}
+
+int NaClHostDescAccess(const char *pathname, int mode) {
+	if (lind_access(pathname, mode) != 0) {
+		return -errno;
+	}
+	return 0;
+}
+
+int NaClHostDescDup(struct NaClHostDesc *d,
+		            struct NaClHostDesc *fd) {
+	int host_desc = lind_dup(d->d);
+	if(host_desc<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return NaClHostDescCtor(fd, host_desc, flags);
+}
+
+int NaClHostDescDup2(struct NaClHostDesc *d,
+		             int fd,
+		             struct NaClHostDesc *fd) {
+	int host_desc = lind_dup(d->d, fd);
+	if(host_desc<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return NaClHostDescCtor(fd, host_desc, flags);
+}
+
+void NaClHostDescSelectAdd(struct NaClHostDesc *d,
+		                  fd_set* set) {
+	FD_ADD(d->d, set);
+	return;
+}
+
+void NaClHostDescPollWatch(struct NaClHostDesc *d,
+		                   struct pollfd* pfd,
+		                   short int events) {
+	pfd->fd = d->d;
+	pfd->events = events;
+	return;
+}
+
+int NaClHostDescSocket(struct NaClHostDesc *d,
+		               int domain,
+		               int type,
+		               int protocol) {
+	int host_desc = lind_socket(domain, type, protocol);
+	if(host_desc<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return NaClHostDescCtor(d, host_desc, d->flags);
+}
+
+int NaClHostDescBind(struct NaClHostDesc *d,
+		           const struct sockaddr *addr,
+		           socklen_t addrlen) {
+	int rv = lind_bind(d->d, addr, addrlen);
+	if(rv<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return 0;
+}
+
+int NaClHostDescListen(struct NaClHostDesc *d,
+		               int backlog) {
+	int rv = lind_listen(d->d, backlog);
+	if(rv<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return 0;
+}
+
+int NaClHostDescAccept(struct NaClHostDesc *d,
+		               const struct sockaddr *addr,
+		               socklen_t addrlen,
+		               struct NaClDest* result) {
+	int host_desc = lind_accept(d->d, addr, addrlen);
+	int flags = NACL_ABI_O_RDWR;
+	if(host_desc<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return NaClHostDescCtor(result, host_desc, flags);
+}
+
+int NaClHostDescConnect(struct NaClHostDesc* d,
+		             const struct sockaddr *addr,
+                     socklen_t addrlen) {
+	int rv = lind_connect(d->d, addr, addrlen);
+	if(rv<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return 0;
+}
+
+int NaClHostDescGetPeerName(struct NaClHostDesc* d,
+		                    struct sockaddr *addr,
+		                    socklen_t *addrlen) {
+	int rv = lind_getpeername(d->d, addr, *addrlen);
+	if(rv<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return 0;
+}
+
+int NaClHostDescGetSockName(struct NaClHostDesc* d,
+		                 struct sockaddr *addr,
+		                 socklen_t *addrlen) {
+	int rv = lind_getsockname(d->d, addr, *addrlen);
+	if(rv<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return 0;
+}
+
+ssize_t NaClHostDescSend(struct NaClHostDesc* d,
+			   const void *buf,
+			   size_t len,
+			   int flags) {
+	ssize_t rv = lind_send(d->d, buf, len, flags);
+	if(rv<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return 0;
+
+}
+
+ssize_t NaClHostDescSendTo(struct NaClHostDesc* d,
+				 const void *buf,
+				 size_t len,
+				 int flags,
+				 const struct sockaddr *dest_addr,
+				 socklen_t addrlen) {
+	ssize_t rv = lind_sendto(d->d, buf, len, flags, dest_addr, addrlen);
+	if(rv<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return 0;
+}
+
+ssize_t NaClHostDescSendMsg(struct NaClHostDesc* d,
+				  const struct msghdr *msg,
+				  int flags) {
+	ssize_t rv = lind_sendmsg(d->d, msg, flags);
+	if(rv<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return 0;
+}
+
+ssize_t NaClHostDescRecv(struct NaClHostDesc* d,
+			   void *buf,
+			   size_t len,
+			   int flags) {
+	ssize_t rv = lind_recv(d->d, buf, len, flags);
+	if(rv<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return 0;
+}
+
+ssize_t NaClHostDescRecvFrom(struct NaClHostDesc* d,
+				   void *buf,
+				   size_t len,
+				   int flags,
+				   struct sockaddr *src_addr,
+				   socklen_t *addrlen) {
+	ssize_t rv = lind_recvfrom(d->d, buf, len, flags, src_addr, addrlen);
+	if(rv<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return 0;
+}
+
+ssize_t NaClHostDescRecvMsg(struct NaClHostDesc* d,
+				  struct msghdr *msg,
+				  int flags) {
+	ssize_t rv = lind_recvmsg(d->d, msg, flags);
+	if(rv<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return 0;
+}
+
+int NaClHostDescGetSockOpt(struct NaClHostDesc* d,
+					int level,
+					int optname,
+					void *optval,
+					socklen_t *optlen) {
+	int rv = lind_getsockopt(d->d, level, optname, optval, optlen);
+	if(rv<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return 0;
+}
+
+int NaClHostDescSetSockOpt(struct NaClHostDesc* d,
+					 int level,
+					 int optname,
+					 const void *optval,
+					 socklen_t optlen) {
+	int rv = lind_setsockopt(d->d, level, optname, optval, optlen);
+	if(rv<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return 0;
+}
+
+int NaClHostDescFcntl(struct NaClHostDesc* d,
+                      int cmd,
+                      int flag_in,
+                      int* flag_out) {
+	int rv = lind_fcntl(d->d, cmd, flag_in, flag_out);
+	if(rv<0) {
+		return -NaClXlateErrno(errno);
+	}
+	return 0;
 }
