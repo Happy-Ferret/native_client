@@ -16,6 +16,7 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <sys/poll.h>
+#include <sys/epoll.h>
 #include <unistd.h>
 #include <stdint.h>
 #include <Python.h>
@@ -98,21 +99,21 @@ int LindPythonFinalize(void);
 PyObject* CallPythonFunc(PyObject* context, const char* func, PyObject* args);
 int ParseResponse(PyObject* response, int* isError, int* code, char** dataOrMessage, int* len);
 
-int lind_pread(int fd, void* buf, int count, off_t offset);
-int lind_pwrite(int fd, const void *buf, int count, off_t offset);
-int lind_access (int version, const char *file);
+ssize_t lind_pread(int fd, void* buf, int count, off_t offset);
+ssize_t lind_pwrite(int fd, const void *buf, int count, off_t offset);
+int lind_access (const char *pathname, int mode);
 int lind_unlink (const char *name);
 int lind_link (const char *from, const char *to);
 int lind_chdir (const char *name);
-int lind_mkdir (int mode, const char *path);
+int lind_mkdir (const char *path, int mode);
 int lind_rmdir (const char *path);
-int lind_xstat (int version, const char *path, struct lind_stat *buf);
-int lind_open (int flags, int mode, const char *path);
+int lind_stat (const char *path, struct lind_stat *buf);
+int lind_open (const char *path, int flags, int mode);
 int lind_close (int fd);
-int lind_read (int fd, int size, void *buf);
-int lind_write (int fd, size_t count, const void *buf);
-int lind_lseek (off_t offset, int fd, int whence);
-int lind_fxstat (int fd, int version, struct lind_stat *buf);
+ssize_t lind_read (int fd, void *buf, size_t count);
+ssize_t lind_write (int fd, const void *buf, size_t count);
+off_t lind_lseek (int fd, off_t offset, int whence);
+int lind_fstat (int fd, struct lind_stat *buf);
 int lind_fstatfs (int fd, struct lind_statfs *buf);
 int lind_statfs (const char *path, struct lind_statfs *buf);
 int lind_noop (void);
@@ -123,26 +124,34 @@ int lind_getdents (int fd, size_t nbytes, char *buf);
 int lind_fcntl_get (int fd, int cmd);
 int lind_fcntl_set (int fd, int cmd, long set_op);
 int lind_socket (int domain, int type, int protocol);
-int lind_bind (int sockfd, socklen_t addrlen, const struct sockaddr *addr);
-int lind_send (int sockfd, size_t len, int flags, const void *buf);
-int lind_recv (int sockfd, size_t len, int flags, void *buf);
-int lind_connect (int sockfd, socklen_t addrlen, const struct sockaddr *src_addr);
+int lind_bind (int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+ssize_t lind_send (int sockfd, const void *buf, size_t len, int flags);
+ssize_t lind_recv (int sockfd, void *buf, size_t len, int flags);
+int lind_connect (int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 int lind_listen (int sockfd, int backlog);
-int lind_sendto (int sockfd, size_t len, int flags, socklen_t addrlen, const struct sockaddr_in *dest_addr, const void *buf);
-int lind_accept (int sockfd, socklen_t addrlen);
-int lind_getpeername (int sockfd, socklen_t addrlen_in, __SOCKADDR_ARG addr, socklen_t * addrlen_out);
-int lind_setsockopt (int sockfd, int level, int optname, socklen_t optlen, const void *optval);
-int lind_getsockopt (int sockfd, int level, int optname, socklen_t optlen, void *optval);
+ssize_t lind_sendto (int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen);
+ssize_t lind_recvfrom (int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t* addrlen);
+ssize_t lind_sendmsg(int sockfd, const struct msghdr *msg, int flags);
+ssize_t lind_recvmsg(int sockfd, struct msghdr *msg, int flags);
+int lind_accept (int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+int lind_getpeername(int sockfd, struct sockaddr* addr, socklen_t * addrlen);
+int lind_getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+int lind_setsockopt (int sockfd, int level, int optname, const void *optval, socklen_t optlen);
+int lind_getsockopt (int sockfd, int level, int optname, void *optval, socklen_t* optlen);
 int lind_shutdown (int sockfd, int how);
-int lind_select (int nfds, fd_set * readfds, fd_set * writefds, fd_set * exceptfds, struct timeval *timeout, struct select_results *result);
+int lind_select (int nfds, fd_set * readfds, fd_set * writefds, fd_set * exceptfds, struct timeval *timeout);
 int lind_getifaddrs (int ifaddrs_buf_siz, void *ifaddrs);
-int lind_recvfrom (int sockfd, size_t len, int flags, socklen_t addrlen, socklen_t * addrlen_out, void *buf, struct sockaddr *src_addr);
-int lind_poll (int nfds, int timeout, struct pollfd *fds_in, struct pollfd *fds_out);
+int lind_poll(struct pollfd *fds, nfds_t nfds, int timeout);
 int lind_socketpair (int domain, int type, int protocol, int *fds);
 int lind_getuid (uid_t * buf);
 int lind_geteuid (uid_t * buf);
 int lind_getgid (gid_t * buf);
 int lind_getegid (gid_t * buf);
 int lind_flock (int fd, int operation);
+char* lind_getcwd(char* buf, size_t size);
+int lind_fcntl(int fd, int cmd, ...);
+int lind_epoll_create(int size);
+int lind_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+int lind_epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout);
 
 #endif /* LIND_PLATFORM_H_ */

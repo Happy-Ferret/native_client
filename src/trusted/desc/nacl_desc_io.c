@@ -312,8 +312,229 @@ static int NaClDescIoDescFstat(struct NaClDesc         *vself,
 }
 
 static int NaClDescIoDescSelectAdd(struct NaClDesc         *vself,
-		                           fdset* fset) {
+		                           fd_set* set) {
 	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	NaClHostDescSelectAdd(self->hd, set);
+	return 0;
+}
+
+static int NaClDescIoDescPollWatch(struct NaClDesc* vself,
+				struct pollfd* pfd,
+				short int events) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	NaClHostDescPollWatch(self->hd, pfd, events);
+	return 0;
+}
+
+static int NaClDescIoDescBind(struct NaClDesc* vself,
+			   const struct sockaddr *addr,
+			   socklen_t addrlen) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	return NaClHostDescBind(self->hd, addr, addrlen);
+}
+
+static int NaClDescIoDescListen(struct NaClDesc* vself,
+				 int backlog) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	return NaClHostDescListen(self->hd, backlog);
+}
+
+static int NaClDescIoDescAccept(struct NaClDesc* vself,
+				 const struct sockaddr *addr,
+				 socklen_t addrlen,
+				 struct NaClDesc** result) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	int retval;
+	struct NaClHostDesc* hfd = NULL;
+	struct NaClDesc* fd = NULL;
+
+	if(!result) {
+	    retval = -NACL_ABI_EINVAL;
+        goto cleanup;
+	}
+	hfd = malloc(sizeof(*hfd));
+	if(NULL == hfd) {
+	    retval = -NACL_ABI_ENOMEM;
+	    goto cleanup;
+	}
+	hfd->d = -1;
+	fd = malloc(sizeof(*fd));
+	if(NULL == fd) {
+        retval = -NACL_ABI_ENOMEM;
+        goto cleanup;
+    }
+	retval = NaClHostDescAccept(self->hd, addr, addrlen, hfd);
+	if(retval<0) {
+	    goto cleanup;
+	}
+	retval = NaClDescIoDescCtor(fd, hfd);
+	if(NaClDescIoDescCtor(fd, hfd)<0) {
+	    retval = -NACL_ABI_ENOMEM;
+        goto cleanup;
+    }
+	*result = (struct NaClDesc*)fd;
+cleanup:
+	if(retval<0) {
+	    if(hfd && hfd->d != -1) {
+	        NaClHostDescClose(hfd);
+	    }
+	    free(fd);
+	    free(hfd);
+	}
+	return retval;
+}
+
+static int NaClDescIoDescConnect(struct NaClDesc* vself,
+				 const struct sockaddr *addr,
+				 socklen_t addrlen) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	return NaClHostDescConnect(self->hd, addr, addrlen);
+}
+
+static int NaClDescIoDescGetPeerName(struct NaClDesc* vself,
+					 struct sockaddr *addr,
+					 socklen_t *addrlen) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	return NaClHostDescGetPeerName(self->hd, addr, addrlen);
+}
+
+static int NaClDescIoDescGetSockName(struct NaClDesc* vself,
+					 struct sockaddr *addr,
+					 socklen_t *addrlen) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	return NaClHostDescGetSockName(self->hd, addr, addrlen);
+}
+
+static ssize_t NaClDescIoDescSend(struct NaClDesc* vself,
+			   const void *buf,
+			   size_t len,
+			   int flags) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	return NaClHostDescSend(self->hd, buf, len, flags);
+}
+
+static ssize_t NaClDescIoDescSendTo(struct NaClDesc* vself,
+				 const void *buf,
+				 size_t len,
+				 int flags,
+				 const struct sockaddr *dest_addr,
+				 socklen_t addrlen) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	return NaClHostDescSendTo(self->hd, buf, len, flags, dest_addr, addrlen);
+}
+
+static ssize_t NaClDescIoDescSendMsg(struct NaClDesc* vself,
+				  const struct msghdr *msg,
+				  int flags) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	return NaClHostDescSendMsg(self->hd, msg, flags);
+}
+
+static ssize_t NaClDescIoDescRecv(struct NaClDesc* vself,
+			   void *buf,
+			   size_t len,
+			   int flags) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	return NaClHostDescRecv(self->hd, msg, flags);
+}
+
+static ssize_t NaClDescIoDescRecvFrom(struct NaClDesc* vself,
+				   void *buf,
+				   size_t len,
+				   int flags,
+				   struct sockaddr *src_addr,
+				   socklen_t *addrlen) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	return NaClHostDescRecvFrom(self->hd, buf, len, flags, src_addr, addrlen);
+}
+
+static ssize_t NaClDescIoDescRecvMsg(struct NaClDesc* vself,
+				  struct msghdr *msg,
+				  int flags) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	return NaClHostDescRecvMsg(self->hd, msg, flags);
+}
+
+static int NaClDescIoDescGetSockOpt(struct NaClDesc* vself,
+					int level,
+					int optname,
+					void *optval,
+					socklen_t *optlen) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	return NaClHostDescGetSockOpt(self->hd, level, optname, optval, optlen);
+}
+
+static int NaClDescIoDescSetSockOpt(struct NaClDesc* vself,
+					 int level,
+					 int optname,
+					 const void *optval,
+					 socklen_t optlen) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+    return NaClHostDescSetSockOpt(self->hd, level, optname, optval, optlen);
+}
+
+static int NaClDescIoDescEpollCtrl(struct NaClDesc* vself,
+                    int op,
+                    struct NaClDesc* vfd,
+                    struct epoll_event *event) {
+    struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+    struct NaClDescIoDesc *fd = (struct NaClDescIoDesc *) vfd;
+    return NaClHostDescEpollCtrl(self->hd, op, fd->hd, event);
+}
+
+static int NaClDescIoDescEpollWait(struct NaClDesc* vself,
+                    struct epoll_event *events,
+                    int maxevents,
+                    int timeout) {
+    struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+    return NaClHostDescEpollWait(self->hd, events, maxevents, timeout);
+}
+
+static int NaClDescIoDescFcntl(struct NaClDesc* vself,
+			int cmd,
+			int flag,
+			struct NaClDesc** result) {
+	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
+	struct NaClDescIoDesc *fd = NULL;
+	struct NaClHostDesc *hfd = NULL;
+	int retval;
+	if(cmd == F_DUPFD || cmd == F_DUPFD_CLOEXEC) {
+	    if(!result) {
+	        retval = -NACL_ABI_EINVAL;
+	        goto cleanup;
+	    }
+	    fd = malloc(sizeof(*fd));
+	    if(NULL == fd) {
+            retval = -NACL_ABI_ENOMEM;
+            goto cleanup;
+	    }
+	    hfd = malloc(sizeof(*hfd));
+	    hfd->d = -1;
+	    if(NULL == hfd) {
+	        retval = -NACL_ABI_ENOMEM;
+	        goto cleanup;
+	    }
+	    retval = NaClHostDescFcntl(self->hd, cmd, flag, hfd);
+	    if(retval<0) {
+	        goto cleanup;
+	    }
+	    retval = NaClDescIoDescCtor(fd, hfd);
+	    if(retval<0) {
+            goto cleanup;
+	    }
+	    *result = (struct NaClDesc*)fd;
+	} else {
+	    retval = NaClHostDescFcntl(self->hd, cmd, flag, NULL);
+	}
+cleanup:
+	if(retval<0) {
+	    if(hfd && hfd->d != -1) {
+	        NaClHostDescClose(hfd);
+	    }
+        free(hfd);
+        free(fd);
+	}
+	return retval;
 }
 
 static int NaClDescIoDescExternalizeSize(struct NaClDesc *vself,
@@ -396,6 +617,25 @@ struct NaClDescVtbl const kNaClDescIoDescVtbl = {
   NaClDescGetMetadata,
   NaClDescSetFlags,
   NaClDescGetFlags,
+  NaClDescIoDescSelectAdd,
+  NaClDescIoDescPollWatch,
+  NaClDescIoDescBind,
+  NaClDescIoDescListen,
+  NaClDescIoDescAccept,
+  NaClDescIoDescConnect,
+  NaClDescIoDescGetPeerName,
+  NaClDescIoDescGetSockName,
+  NaClDescIoDescSend,
+  NaClDescIoDescSendTo,
+  NaClDescIoDescSendMsg,
+  NaClDescIoDescRecv,
+  NaClDescIoDescRecvFrom,
+  NaClDescIoDescRecvMsg,
+  NaClDescIoDescGetSockOpt,
+  NaClDescIoDescSetSockOpt,
+  NaClDescIoDescEpollCtrl,
+  NaClDescIoDescEpollWait,
+  NaClDescIoDescFcntl,
   NACL_DESC_HOST_IO,
 };
 

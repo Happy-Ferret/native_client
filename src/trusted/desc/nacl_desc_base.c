@@ -592,6 +592,262 @@ int NaClDescGetValueNotImplemented(struct NaClDesc  *vself) {
   return -NACL_ABI_EINVAL;
 }
 
+int NaClDescSelectAddNotImplemented(struct NaClDesc         *vself,
+                                   fd_set* set) {
+    UNREFERENCED_PARAMETER(set);
+    NaClLog(LOG_ERROR,
+          "SelectAdd method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+int NaClDescPollWatchNotImplemented(struct NaClDesc* vself,
+                struct pollfd* pfd,
+                short int events) {
+    UNREFERENCED_PARAMETER(pfd);
+    UNREFERENCED_PARAMETER(events);
+    NaClLog(LOG_ERROR,
+          "PollWatch method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+int NaClDescBindNotImplemented(struct NaClDesc* vself,
+               const struct sockaddr *addr,
+               socklen_t addrlen) {
+    UNREFERENCED_PARAMETER(addr);
+    UNREFERENCED_PARAMETER(addrlen);
+    NaClLog(LOG_ERROR,
+          "Bind method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+int NaClDescListenNotImplemented(struct NaClDesc* vself,
+                 int backlog) {
+    UNREFERENCED_PARAMETER(backlog);
+    NaClLog(LOG_ERROR,
+          "Listen method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+int NaClDescAcceptNotImplemented(struct NaClDesc* vself,
+                 const struct sockaddr *addr,
+                 socklen_t addrlen,
+                 struct NaClDesc** result) {
+    UNREFERENCED_PARAMETER(addr);
+    UNREFERENCED_PARAMETER(addrlen);
+    UNREFERENCED_PARAMETER(result);
+    NaClLog(LOG_ERROR,
+          "Accept method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+int NaClDescConnectNotImplemented(struct NaClDesc* vself,
+                 const struct sockaddr *addr,
+                 socklen_t addrlen) {
+    UNREFERENCED_PARAMETER(addr);
+    UNREFERENCED_PARAMETER(addrlen);
+    NaClLog(LOG_ERROR,
+          "Connect method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+int NaClDescGetPeerNameNotImplemented(struct NaClDesc* vself,
+                     struct sockaddr *addr,
+                     socklen_t *addrlen) {
+    UNREFERENCED_PARAMETER(addr);
+    UNREFERENCED_PARAMETER(addrlen);
+    NaClLog(LOG_ERROR,
+          "GetPeerName method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+int NaClDescGetSockNameNotImplemented(struct NaClDesc* vself,
+                     struct sockaddr *addr,
+                     socklen_t *addrlen) {
+    UNREFERENCED_PARAMETER(addr);
+    UNREFERENCED_PARAMETER(addrlen);
+    NaClLog(LOG_ERROR,
+          "GetSockName method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+ssize_t NaClDescSendNotImplemented(struct NaClDesc* vself,
+               const void *buf,
+               size_t len,
+               int flags) {
+    UNREFERENCED_PARAMETER(buf);
+    UNREFERENCED_PARAMETER(len);
+    UNREFERENCED_PARAMETER(flags);
+    NaClLog(LOG_ERROR,
+          "Send method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+ssize_t NaClDescSendToNotImplemented(struct NaClDesc* vself,
+                 const void *buf,
+                 size_t len,
+                 int flags,
+                 const struct sockaddr *dest_addr,
+                 socklen_t addrlen) {
+    UNREFERENCED_PARAMETER(buf);
+    UNREFERENCED_PARAMETER(len);
+    UNREFERENCED_PARAMETER(flags);
+    UNREFERENCED_PARAMETER(dest_addr);
+    UNREFERENCED_PARAMETER(addrlen);
+    NaClLog(LOG_ERROR,
+          "SendTo method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+ssize_t NaClDescSockSendMsgNotImplemented(struct NaClDesc* vself,
+                  const struct msghdr *msg,
+                  int flags) {
+    UNREFERENCED_PARAMETER(msg);
+    UNREFERENCED_PARAMETER(flags);
+    NaClLog(LOG_ERROR,
+          "SendMsg method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+ssize_t NaClDescRecvNotImplemented(struct NaClDesc* vself,
+               void *buf,
+               size_t len,
+               int flags) {
+    UNREFERENCED_PARAMETER(buf);
+    UNREFERENCED_PARAMETER(len);
+    UNREFERENCED_PARAMETER(flags);
+    NaClLog(LOG_ERROR,
+          "Recv method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+ssize_t NaClDescRecvFromNotImplemented(struct NaClDesc* vself,
+                   void *buf,
+                   size_t len,
+                   int flags,
+                   struct sockaddr *src_addr,
+                   socklen_t *addrlen) {
+    UNREFERENCED_PARAMETER(buf);
+    UNREFERENCED_PARAMETER(len);
+    UNREFERENCED_PARAMETER(flags);
+    UNREFERENCED_PARAMETER(src_addr);
+    UNREFERENCED_PARAMETER(addrlen);
+    NaClLog(LOG_ERROR,
+          "RecvFrom method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+ssize_t NaClDescSockRecvMsgNotImplemented(struct NaClDesc* vself,
+                  struct msghdr *msg,
+                  int flags) {
+    UNREFERENCED_PARAMETER(msg);
+    UNREFERENCED_PARAMETER(flags);
+    NaClLog(LOG_ERROR,
+          "RecvMsg method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+int NaClDescGetSockOptNotImplemented(struct NaClDesc* vself,
+                    int level,
+                    int optname,
+                    void *optval,
+                    socklen_t *optlen) {
+    UNREFERENCED_PARAMETER(level);
+    UNREFERENCED_PARAMETER(optname);
+    UNREFERENCED_PARAMETER(optval);
+    UNREFERENCED_PARAMETER(optlen);
+    NaClLog(LOG_ERROR,
+          "GetSockOpt method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+int NaClDescSetSockOptNotImplemented(struct NaClDesc* vself,
+                     int level,
+                     int optname,
+                     const void *optval,
+                     socklen_t optlen) {
+    UNREFERENCED_PARAMETER(level);
+    UNREFERENCED_PARAMETER(optname);
+    UNREFERENCED_PARAMETER(optval);
+    UNREFERENCED_PARAMETER(optlen);
+    NaClLog(LOG_ERROR,
+          "SetSockOpt method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+int NaClDescEpollCtrlNotImplemented(struct NaClDesc* vself,
+                    int op,
+                    struct NaClDesc* vfd,
+                    struct epoll_event *event) {
+    UNREFERENCED_PARAMETER(op);
+    UNREFERENCED_PARAMETER(vfd);
+    UNREFERENCED_PARAMETER(event);
+    NaClLog(LOG_ERROR,
+          "EpollCtrl method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+int NaClDescEpollWaitNotImplemented(struct NaClDesc* vself,
+                    struct epoll_event *events,
+                    int maxevents,
+                    int timeout) {
+    UNREFERENCED_PARAMETER(events);
+    UNREFERENCED_PARAMETER(maxevents);
+    UNREFERENCED_PARAMETER(timeout);
+    NaClLog(LOG_ERROR,
+          "EpollWait method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
+int NaClDescFcntlNotImplemented(struct NaClDesc* vself,
+            int cmd,
+            int flag,
+            struct NaClDesc** vfd) {
+    UNREFERENCED_PARAMETER(cmd);
+    UNREFERENCED_PARAMETER(flag);
+    UNREFERENCED_PARAMETER(vfd);
+    NaClLog(LOG_ERROR,
+          "Fcntl method is not implemented for object of type %s\n",
+          NaClDescTypeString(((struct NaClDescVtbl const *)
+                              vself->base.vtbl)->typeTag));
+    return -NACL_ABI_EINVAL;
+}
+
 int NaClDescInternalizeNotImplemented(
     struct NaClDesc                **out_desc,
     struct NaClDescXferState       *xfer,
@@ -737,5 +993,24 @@ struct NaClDescVtbl const kNaClDescVtbl = {
   NaClDescGetMetadata,
   NaClDescSetFlags,
   NaClDescGetFlags,
+  NaClDescSelectAddNotImplemented,
+  NaClDescPollWatchNotImplemented,
+  NaClDescBindNotImplemented,
+  NaClDescListenNotImplemented,
+  NaClDescAcceptNotImplemented,
+  NaClDescConnectNotImplemented,
+  NaClDescGetPeerNameNotImplemented,
+  NaClDescGetSockNameNotImplemented,
+  NaClDescSendNotImplemented,
+  NaClDescSendToNotImplemented,
+  NaClDescSockSendMsgNotImplemented,
+  NaClDescRecvNotImplemented,
+  NaClDescRecvFromNotImplemented,
+  NaClDescSockRecvMsgNotImplemented,
+  NaClDescGetSockOptNotImplemented,
+  NaClDescSetSockOptNotImplemented,
+  NaClDescEpollCtrlNotImplemented,
+  NaClDescEpollWaitNotImplemented,
+  NaClDescFcntlNotImplemented,
   (enum NaClDescTypeTag) -1,  /* NaClDesc is an abstract base class */
 };

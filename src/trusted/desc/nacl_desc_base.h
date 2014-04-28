@@ -14,6 +14,9 @@
 #include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
+#include <sys/poll.h>
+#include <sys/epoll.h>
 
 #include "native_client/src/include/nacl_base.h"
 #include "native_client/src/include/portability.h"
@@ -388,102 +391,101 @@ struct NaClDescVtbl {
    * Followings are extended by Lind
    */
 
-  void (*SelectAdd)(struct NaClDesc *self,
-		                   fd_set* fdset);
+  int (*SelectAdd)(struct NaClDesc *vself,
+		                   fd_set* set);
 
-  void (*PollWatch)(struct NaClDest* self,
+  int (*PollWatch)(struct NaClDesc* vself,
 		            struct pollfd* pfd,
-		            short int event);
+		            short int events);
 
   /*
    * We put "Sock" in front of the function names to avoid
    * conflicts with functions defined above
    */
 
-  int (*SockBind)(struct NaClDest* self,
+  int (*SockBind)(struct NaClDesc* vself,
 		           const struct sockaddr *addr,
 		           socklen_t addrlen);
 
-  int (*SockListen)(struct NaClDest* self,
+  int (*SockListen)(struct NaClDesc* vself,
 		             int backlog);
 
-  int (*SockAccept)(struct NaClDest* self,
+  int (*SockAccept)(struct NaClDesc* vself,
 		             const struct sockaddr *addr,
 		             socklen_t addrlen,
-		             struct NaClDest** result);
+		             struct NaClDesc** result);
 
-  int (*SockConnect)(struct NaClDest* self,
+  int (*SockConnect)(struct NaClDesc* vself,
 		             const struct sockaddr *addr,
                      socklen_t addrlen);
 
-  int (*SockGetPeerName)(struct NaClDest* self,
+  int (*SockGetPeerName)(struct NaClDesc* vself,
 		                 struct sockaddr *addr,
 		                 socklen_t *addrlen);
 
-  int (*SockGetSockName)(struct NaClDest* self,
+  int (*SockGetSockName)(struct NaClDesc* vself,
 		                 struct sockaddr *addr,
 		                 socklen_t *addrlen);
 
-  ssize_t (*SockSend)(struct NaClDest* self,
+  ssize_t (*SockSend)(struct NaClDesc* vself,
 		           const void *buf,
 		           size_t len,
 		           int flags);
 
-  ssize_t (*SockSendTo)(struct NaClDest* self,
+  ssize_t (*SockSendTo)(struct NaClDesc* vself,
 		             const void *buf,
 		             size_t len,
 		             int flags,
                      const struct sockaddr *dest_addr,
                      socklen_t addrlen);
 
-  ssize_t (*SockSendMsg)(struct NaClDest* self,
+  ssize_t (*SockSendMsg)(struct NaClDesc* vself,
 		              const struct msghdr *msg,
 		              int flags);
 
-  ssize_t (*SockRecv)(struct NaClDest* self,
+  ssize_t (*SockRecv)(struct NaClDesc* vself,
 		           void *buf,
 		           size_t len,
 		           int flags);
 
-  ssize_t (*SockRecvFrom)(struct NaClDest* self,
+  ssize_t (*SockRecvFrom)(struct NaClDesc* vself,
 		               void *buf,
 		               size_t len,
 		               int flags,
                        struct sockaddr *src_addr,
                        socklen_t *addrlen);
 
-  ssize_t (*SockRecvMsg)(struct NaClDest* self,
+  ssize_t (*SockRecvMsg)(struct NaClDesc* vself,
 		              struct msghdr *msg,
 		              int flags);
 
-
-
-  int (*SockEpollCtrl)(struct NaClDest* self,
-		                int op,
-		                struct NaClDest* fd,
-		                struct epoll_event *event);
-
-  int (*SockEpollWait)(struct NaClDest* self,
-		                struct epoll_event *events,
-                        int maxevents,
-                        int timeout);
-
-  int (*SockGetSockOpt)(struct NaClDest* self,
+  int (*SockGetSockOpt)(struct NaClDesc* vself,
 		                int level,
 		                int optname,
 				        void *optval,
 				        socklen_t *optlen);
 
-   int (*SockSetSockOpt)(struct NaClDest* self,
+   int (*SockSetSockOpt)(struct NaClDesc* vself,
 		                 int level,
 		                 int optname,
 				         const void *optval,
 				         socklen_t optlen);
 
-   int (*Fcntl)(struct NaClDest* self,
+
+  int (*EpollCtrl)(struct NaClDesc* vself,
+		                int op,
+		                struct NaClDesc* vfd,
+		                struct epoll_event *event);
+
+  int (*EpollWait)(struct NaClDesc* vself,
+		                struct epoll_event *events,
+                        int maxevents,
+                        int timeout);
+
+   int (*Fcntl)(struct NaClDesc* vself,
 		        int cmd,
 		        int flag,
-		        struct NaClDest** fd);
+		        struct NaClDesc** vfd);
 
   /*
    * Inappropriate methods for the subclass will just return
@@ -765,6 +767,96 @@ int NaClDescPostNotImplemented(struct NaClDesc  *vself);
 int NaClDescSemWaitNotImplemented(struct NaClDesc *vself);
 
 int NaClDescGetValueNotImplemented(struct NaClDesc  *vself);
+
+int NaClDescSelectAddNotImplemented(struct NaClDesc   *vself,
+                                   fd_set* set);
+
+int NaClDescPollWatchNotImplemented(struct NaClDesc* vself,
+                struct pollfd* pfd,
+                short int events);
+
+int NaClDescBindNotImplemented(struct NaClDesc* vself,
+               const struct sockaddr *addr,
+               socklen_t addrlen);
+
+int NaClDescListenNotImplemented(struct NaClDesc* vself,
+                 int backlog);
+
+int NaClDescAcceptNotImplemented(struct NaClDesc* vself,
+                 const struct sockaddr *addr,
+                 socklen_t addrlen,
+                 struct NaClDesc** result);
+
+int NaClDescConnectNotImplemented(struct NaClDesc* vself,
+                 const struct sockaddr *addr,
+                 socklen_t addrlen);
+
+int NaClDescGetPeerNameNotImplemented(struct NaClDesc* vself,
+                     struct sockaddr *addr,
+                     socklen_t *addrlen);
+
+int NaClDescGetSockNameNotImplemented(struct NaClDesc* vself,
+                     struct sockaddr *addr,
+                     socklen_t *addrlen);
+
+ssize_t NaClDescSendNotImplemented(struct NaClDesc* vself,
+               const void *buf,
+               size_t len,
+               int flags);
+
+ssize_t NaClDescSendToNotImplemented(struct NaClDesc* vself,
+                 const void *buf,
+                 size_t len,
+                 int flags,
+                 const struct sockaddr *dest_addr,
+                 socklen_t addrlen);
+
+ssize_t NaClDescSockSendMsgNotImplemented(struct NaClDesc* vself,
+                  const struct msghdr *msg,
+                  int flags);
+
+ssize_t NaClDescRecvNotImplemented(struct NaClDesc* vself,
+               void *buf,
+               size_t len,
+               int flags);
+
+ssize_t NaClDescRecvFromNotImplemented(struct NaClDesc* vself,
+                   void *buf,
+                   size_t len,
+                   int flags,
+                   struct sockaddr *src_addr,
+                   socklen_t *addrlen);
+
+ssize_t NaClDescSockRecvMsgNotImplemented(struct NaClDesc* vself,
+                  struct msghdr *msg,
+                  int flags);
+
+int NaClDescGetSockOptNotImplemented(struct NaClDesc* vself,
+                    int level,
+                    int optname,
+                    void *optval,
+                    socklen_t *optlen);
+
+int NaClDescSetSockOptNotImplemented(struct NaClDesc* vself,
+                     int level,
+                     int optname,
+                     const void *optval,
+                     socklen_t optlen);
+
+int NaClDescEpollCtrlNotImplemented(struct NaClDesc* vself,
+                    int op,
+                    struct NaClDesc* vfd,
+                    struct epoll_event *event);
+
+int NaClDescEpollWaitNotImplemented(struct NaClDesc* vself,
+                    struct epoll_event *events,
+                    int maxevents,
+                    int timeout);
+
+int NaClDescFcntlNotImplemented(struct NaClDesc* vself,
+            int cmd,
+            int flag,
+            struct NaClDesc** vfd);
 
 int NaClDescInternalizeNotImplemented(
     struct NaClDesc                **out_desc,
