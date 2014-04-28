@@ -285,7 +285,7 @@ int NaClHostDescOpen(struct NaClHostDesc  *d,
 
   NaClLog(3, "NaClHostDescOpen: invoking POSIX open(%s,0x%x,0%o)\n",
           path, posix_flags, mode);
-  host_desc = lind_open(posix_flags, mode, path);
+  host_desc = lind_open(path, posix_flags, mode);
   NaClLog(3, "NaClHostDescOpen: got descriptor %d\n", host_desc);
   if (-1 == host_desc) {
     NaClLog(2, "NaClHostDescOpen: open returned -1, errno %d\n", errno);
@@ -293,9 +293,9 @@ int NaClHostDescOpen(struct NaClHostDesc  *d,
   }
   if (-1 ==
 #if NACL_LINUX
-      lind_fxstat(host_desc, 1, &stbuf)
+      lind_fstat(host_desc, &stbuf)
 #else
-      lind_fxstat(host_desc, 1, &stbuf)
+      fstat(host_desc, &stbuf)
 #endif
       ) {
     NaClLog(LOG_ERROR,
@@ -391,7 +391,7 @@ ssize_t NaClHostDescRead(struct NaClHostDesc  *d,
     NaClLog(3, "NaClHostDescRead: WRONLY file\n");
     return -NACL_ABI_EBADF;
   }
-  return ((-1 == (retval = lind_read(d->d, len, buf)))
+  return ((-1 == (retval = lind_read(d->d, buf, len)))
           ? -NaClXlateErrno(errno) : retval);
 }
 
@@ -405,7 +405,7 @@ ssize_t NaClHostDescWrite(struct NaClHostDesc *d,
     NaClLog(3, "NaClHostDescWrite: RDONLY file\n");
     return -NACL_ABI_EBADF;
   }
-  return ((-1 == (retval = lind_write(d->d, len, buf)))
+  return ((-1 == (retval = lind_write(d->d, buf, len)))
           ? -NaClXlateErrno(errno) : retval);
 }
 
@@ -416,10 +416,10 @@ nacl_off64_t NaClHostDescSeek(struct NaClHostDesc  *d,
 
   NaClHostDescCheckValidity("NaClHostDescSeek", d);
 #if NACL_LINUX
-  return ((-1 == (retval = lind_lseek(offset, d->d, whence)))
+  return ((-1 == (retval = lind_lseek(d->d, offset, whence)))
           ? -NaClXlateErrno(errno) : retval);
 #elif NACL_OSX
-  return ((-1 == (retval = lind_lseek(offset, d->d, whence)))
+  return ((-1 == (retval = lseek(d->d, offset, whence)))
           ? -NaClXlateErrno(errno) : retval);
 #else
 # error "What Unix-like OS is this?"
@@ -452,7 +452,7 @@ ssize_t NaClHostDescPWrite(struct NaClHostDesc *d,
     NaClLog(3, "NaClHostDescPWrite: RDONLY file\n");
     return -NACL_ABI_EBADF;
   }
-
+#if NACL_OSX
   /*
    * OSX's interpretation of what the POSIX standard requires differs
    * from Linux.  On OSX, pwrite using a descriptor that was opened
@@ -463,9 +463,10 @@ ssize_t NaClHostDescPWrite(struct NaClHostDesc *d,
    * seek-to-end-before-write semantics apply.
    */
   if (0 != (d->flags & NACL_ABI_O_APPEND)) {
-    return ((-1 == (retval = lind_write(d->d, len, buf)))
+    return ((-1 == (retval = write(d->d, buf, len)))
             ? -NaClXlateErrno(errno) : retval);
   }
+#endif
   return ((-1 == (retval = lind_pwrite(d->d, buf, len, offset)))
           ? -NaClXlateErrno(errno) : retval);
 }
@@ -488,11 +489,11 @@ int NaClHostDescFstat(struct NaClHostDesc  *d,
                       nacl_host_stat_t     *nhsp) {
   NaClHostDescCheckValidity("NaClHostDescFstat", d);
 #if NACL_LINUX
-  if (lind_fxstat(d->d, 1, nhsp) == -1) {
+  if (lind_fstat(d->d, nhsp) == -1) {
     return -errno;
   }
 #elif NACL_OSX
-  if (fxstat(d->d, 1, nhsp) == -1) {
+  if (fstat(d->d, nhsp) == -1) {
     return -errno;
   }
 #else
@@ -521,11 +522,11 @@ int NaClHostDescStat(char const       *host_os_pathname,
                      nacl_host_stat_t *nhsp) {
 
 #if NACL_LINUX
-  if (lind_xstat(1, host_os_pathname, nhsp) == -1) {
+  if (lind_stat(host_os_pathname, nhsp) == -1) {
     return -errno;
   }
 #elif NACL_OSX
-  if (lind_xstat(1, host_os_pathname, nhsp) == -1) {
+  if (stat(host_os_pathname, nhsp) == -1) {
     return -errno;
   }
 #else

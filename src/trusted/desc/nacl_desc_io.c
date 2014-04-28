@@ -17,6 +17,7 @@
 #endif
 
 #include <string.h>
+#include <fcntl.h>
 
 #include "native_client/src/include/nacl_macros.h"
 #include "native_client/src/shared/imc/nacl_imc_c.h"
@@ -346,7 +347,7 @@ static int NaClDescIoDescAccept(struct NaClDesc* vself,
 	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
 	int retval;
 	struct NaClHostDesc* hfd = NULL;
-	struct NaClDesc* fd = NULL;
+	struct NaClDescIoDesc* fd = NULL;
 
 	if(!result) {
 	    retval = -NACL_ABI_EINVAL;
@@ -376,7 +377,9 @@ static int NaClDescIoDescAccept(struct NaClDesc* vself,
 cleanup:
 	if(retval<0) {
 	    if(hfd && hfd->d != -1) {
-	        NaClHostDescClose(hfd);
+	        if (0 != NaClHostDescClose(hfd)) {
+                NaClLog(LOG_FATAL, "NaClDescIoDescDtor: NaClHostDescClose failed\n");
+            }
 	    }
 	    free(fd);
 	    free(hfd);
@@ -435,7 +438,7 @@ static ssize_t NaClDescIoDescRecv(struct NaClDesc* vself,
 			   size_t len,
 			   int flags) {
 	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
-	return NaClHostDescRecv(self->hd, msg, flags);
+	return NaClHostDescRecv(self->hd, buf, len, flags);
 }
 
 static ssize_t NaClDescIoDescRecvFrom(struct NaClDesc* vself,
@@ -529,7 +532,9 @@ static int NaClDescIoDescFcntl(struct NaClDesc* vself,
 cleanup:
 	if(retval<0) {
 	    if(hfd && hfd->d != -1) {
-	        NaClHostDescClose(hfd);
+	        if (0 != NaClHostDescClose(hfd)) {
+                NaClLog(LOG_FATAL, "NaClDescIoDescDtor: NaClHostDescClose failed\n");
+            }
 	    }
         free(hfd);
         free(fd);
@@ -577,7 +582,7 @@ static int NaClDescIoDescExternalize(struct NaClDesc           *vself,
   return 0;
 }
 
-struct NaClDescVtbl const kNaClDescIoDescVtbl = {
+static struct NaClDescVtbl const kNaClDescIoDescVtbl = {
   {
     NaClDescIoDescDtor,
   },

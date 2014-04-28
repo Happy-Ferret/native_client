@@ -23,7 +23,9 @@
 # include "native_client/src/shared/platform/win/nacl_host_desc_types.h"
 #endif
 
-
+#include <sys/epoll.h>
+#include <sys/poll.h>
+#include <sys/socket.h>
 
 /*
  * see NACL_MAP_PAGESIZE from nacl_config.h; map operations must be aligned
@@ -331,6 +333,118 @@ extern int NaClHostDescGetcwd(char *path, size_t len) NACL_WUR;
  * Underlying host-OS functions:  unlink(2) / _unlink
  */
 extern int NaClHostDescUnlink(char const *path) NACL_WUR;
+
+int NaClHostDescAccess(const char *pathname, int mode);
+
+int NaClHostDescDup(struct NaClHostDesc *d,
+                    struct NaClHostDesc *fd);
+
+int NaClHostDescDup2(struct NaClHostDesc *d,
+                     int fd,
+                     struct NaClHostDesc *nfd);
+
+void NaClHostDescSelectAdd(struct NaClHostDesc *d,
+                          fd_set* set);
+
+void NaClHostDescPollWatch(struct NaClHostDesc *d,
+                           struct pollfd* pfd,
+                           short int events);
+
+int NaClHostDescSocket(struct NaClHostDesc *d,
+                       int domain,
+                       int type,
+                       int protocol);
+
+int NaClHostDescBind(struct NaClHostDesc *d,
+                   const struct sockaddr *addr,
+                   socklen_t addrlen);
+
+int NaClHostDescListen(struct NaClHostDesc *d,
+                       int backlog);
+
+int NaClHostDescAccept(struct NaClHostDesc *d,
+                       const struct sockaddr *addr,
+                       socklen_t addrlen,
+                       struct NaClHostDesc* result);
+
+int NaClHostDescConnect(struct NaClHostDesc* d,
+                     const struct sockaddr *addr,
+                     socklen_t addrlen);
+
+int NaClHostDescGetPeerName(struct NaClHostDesc* d,
+                            struct sockaddr *addr,
+                            socklen_t *addrlen);
+
+int NaClHostDescGetSockName(struct NaClHostDesc* d,
+                         struct sockaddr *addr,
+                         socklen_t *addrlen);
+
+ssize_t NaClHostDescSend(struct NaClHostDesc* d,
+               const void *buf,
+               size_t len,
+               int flags);
+
+ssize_t NaClHostDescSendTo(struct NaClHostDesc* d,
+                 const void *buf,
+                 size_t len,
+                 int flags,
+                 const struct sockaddr *dest_addr,
+                 socklen_t addrlen);
+
+ssize_t NaClHostDescSendMsg(struct NaClHostDesc* d,
+                  const struct msghdr *msg,
+                  int flags);
+
+ssize_t NaClHostDescRecv(struct NaClHostDesc* d,
+               void *buf,
+               size_t len,
+               int flags);
+
+ssize_t NaClHostDescRecvFrom(struct NaClHostDesc* d,
+                   void *buf,
+                   size_t len,
+                   int flags,
+                   struct sockaddr *src_addr,
+                   socklen_t *addrlen);
+
+ssize_t NaClHostDescRecvMsg(struct NaClHostDesc* d,
+                  struct msghdr *msg,
+                  int flags);
+
+int NaClHostDescGetSockOpt(struct NaClHostDesc* d,
+                    int level,
+                    int optname,
+                    void *optval,
+                    socklen_t *optlen);
+
+int NaClHostDescSetSockOpt(struct NaClHostDesc* d,
+                     int level,
+                     int optname,
+                     const void *optval,
+                     socklen_t optlen);
+
+int NaClHostDescEpollCtrl(struct NaClHostDesc* d,
+                    int op,
+                    struct NaClHostDesc* fd,
+                    struct epoll_event *event);
+
+int NaClHostDescEpollCreate(struct NaClHostDesc* d,
+                            int size);
+
+int NaClHostDescEpollWait(struct NaClHostDesc* d,
+                          struct epoll_event *events,
+                          int maxevents,
+                          int timeout);
+
+int NaClHostDescFcntl(struct NaClHostDesc* d,
+                      int cmd,
+                      int flag,
+                      struct NaClHostDesc* dupd);
+
+int NaClHostDescSelect(int nfds, fd_set *readfds, fd_set *writefds,
+                  fd_set *exceptfds, struct timeval *timeout);
+
+int NaClHostDescPoll(struct pollfd *fds, nfds_t nfds, int timeout);
 
 /*
  * Maps NACI_ABI_ versions of the mmap prot argument to host ABI versions

@@ -152,7 +152,7 @@ int NaClHostDirOpen(struct NaClHostDir  *d,
   }
 
   NaClLog(3, "NaClHostDirOpen: invoking open(%s)\n", path);
-  fd = lind_open(O_RDONLY, 0, path);
+  fd = lind_open(path, O_RDONLY, 0);
   NaClLog(3, "NaClHostDirOpen: got DIR* %d\n", fd);
   if (-1 == fd) {
     NaClLog(LOG_ERROR,
@@ -160,7 +160,7 @@ int NaClHostDirOpen(struct NaClHostDir  *d,
     return -NaClXlateErrno(errno);
   }
   /* check that it is really a directory */
-  if (-1 == lind_fxstat(fd, 1, &stbuf)) {
+  if (-1 == lind_fstat(fd, &stbuf)) {
     NaClLog(LOG_ERROR,
             "NaClHostDirOpen: fstat failed?!?  errno %d\n", errno);
     (void) lind_close(fd);
@@ -249,8 +249,8 @@ static ssize_t NaClStreamDirents(struct NaClHostDir *d,
     if (0 == entry_size) {
       CHECK(d->cur_byte == d->nbytes);
       retval = lind_getdents(d->fd,
-                        sizeof d->dirent_buf,
-                        (char* )(struct dirent *) d->dirent_buf);
+                        (char* )(struct dirent *) d->dirent_buf,
+                        sizeof d->dirent_buf);
       if (-1 == retval) {
         if (xferred > 0) {
           /* next time through, we'll pick up the error again */

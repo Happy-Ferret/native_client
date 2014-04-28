@@ -109,8 +109,30 @@
  */
 #define NACL_sys_test_syscall_1         111
 #define NACL_sys_test_syscall_2         112
-#define NACL_sys_lind_syscall         113
 
-#define NACL_MAX_SYSCALLS               114
+#define NACL_sys_select         200
+#define NACL_sys_poll         201
+#define NACL_sys_epoll_create         202
+#define NACL_sys_epoll_ctl         203
+#define NACL_sys_epoll_wait         204
+#define NACL_sys_socket         205
+#define NACL_sys_bind         206
+#define NACL_sys_listen         207
+#define NACL_sys_accept         208
+#define NACL_sys_connect         209
+#define NACL_sys_socketpair         210
+#define NACL_sys_send         211
+#define NACL_sys_sendto         212
+#define NACL_sys_sendmsg         213
+#define NACL_sys_recv         214
+#define NACL_sys_recvfrom         215
+#define NACL_sys_recvmsg         216
+#define NACL_sys_getsockname         217
+#define NACL_sys_getpeername         218
+#define NACL_sys_getsockopt         219
+#define NACL_sys_setsockopt         220
+#define NACL_sys_fcntl         221
+
+#define NACL_MAX_SYSCALLS               222
 
 #endif

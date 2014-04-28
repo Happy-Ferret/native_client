@@ -83,21 +83,13 @@
 #define LIND_comp_accept                107
 #define LIND_comp_recv                  108
 
-
-struct select_results {
-    struct timeval used_t;
-    fd_set r;
-    fd_set w;
-    fd_set e;
-};
-
 int GetHostFdFromLindFd(int lindFd);
 
 int LindPythonInit(void);
 int LindPythonFinalize(void);
 
 PyObject* CallPythonFunc(PyObject* context, const char* func, PyObject* args);
-int ParseResponse(PyObject* response, int* isError, int* code, char** dataOrMessage, int* len);
+//int ParseResponse(PyObject* response, int* isError, int* code, char** dataOrMessage, int* len);
 
 ssize_t lind_pread(int fd, void* buf, int count, off_t offset);
 ssize_t lind_pwrite(int fd, const void *buf, int count, off_t offset);
@@ -120,7 +112,8 @@ int lind_noop (void);
 int lind_getpid (pid_t * buf);
 int lind_dup (int oldfd);
 int lind_dup2 (int oldfd, int newfd);
-int lind_getdents (int fd, size_t nbytes, char *buf);
+int lind_getdents (unsigned int fd, char *dirp,
+                    unsigned int count);
 int lind_fcntl_get (int fd, int cmd);
 int lind_fcntl_set (int fd, int cmd, long set_op);
 int lind_socket (int domain, int type, int protocol);
