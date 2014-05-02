@@ -197,7 +197,7 @@ static struct NaClDescVtbl const kNaClDescDirDescVtbl = {
   NaClDescSockRecvMsgNotImplemented,
   NaClDescGetSockOptNotImplemented,
   NaClDescSetSockOptNotImplemented,
-  NaClDescEpollCtrlNotImplemented,
+  NaClDescEpollCtlNotImplemented,
   NaClDescEpollWaitNotImplemented,
   NaClDescFcntlNotImplemented,
   NACL_DESC_DIR,

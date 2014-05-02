@@ -594,18 +594,33 @@ int NaClHostDescDup2(struct NaClHostDesc *d,
 	return NaClHostDescCtor(nfd, host_desc, flags);
 }
 
-void NaClHostDescSelectAdd(struct NaClHostDesc *d,
-		                  fd_set* set) {
-	FD_SET(d->d, set);
-	return;
+int NaClHostDescSelectAdd(struct NaClHostDesc *d,
+		                  fd_set* set,
+		                  int nacl_desc,
+                          int* map_hd_to_nd,
+                          size_t map_size,
+                          uint32_t* maxhfd) {
+	if(d->d >= (int)map_size) {
+	    return -NACL_ABI_EINVAL;
+	}
+    FD_SET(d->d, set);
+    map_hd_to_nd[d->d] = nacl_desc;
+    if(d->d > (int)*maxhfd) {
+        *maxhfd = d->d;
+    }
+	return 0;
 }
 
-void NaClHostDescPollWatch(struct NaClHostDesc *d,
-		                   struct pollfd* pfd,
-		                   short int events) {
+int NaClHostDescPollWatch(struct NaClHostDesc *d,
+		                   host_pollfd* pfd,
+                           int* map_hd_to_nd,
+                           size_t map_size) {
+    if(d->d >= (int)map_size) {
+        return -NACL_ABI_EINVAL;
+    }
+    map_hd_to_nd[d->d] = pfd->fd;
 	pfd->fd = d->d;
-	pfd->events = events;
-	return;
+	return 0;
 }
 
 int NaClHostDescSocket(struct NaClHostDesc *d,
@@ -613,15 +628,31 @@ int NaClHostDescSocket(struct NaClHostDesc *d,
 		               int type,
 		               int protocol) {
 	int host_desc = lind_socket(domain, type, protocol);
+	int flags = NACL_ABI_O_RDWR;
 	if(host_desc<0) {
 		return -NaClXlateErrno(errno);
 	}
-	return NaClHostDescCtor(d, host_desc, d->flags);
+	return NaClHostDescCtor(d, host_desc, flags);
+}
+
+int NaClHostDescSocketPair(int domain,
+                       int type,
+                       int protocol,
+                       struct NaClHostDesc **d) {
+    int sv[2];
+    int flags = NACL_ABI_O_RDWR;
+    int rv = lind_socketpair(domain, type, protocol, sv);
+    if(rv<0) {
+        return -NaClXlateErrno(errno);
+    }
+    NaClHostDescCtor(d[0], sv[0], flags);
+    NaClHostDescCtor(d[1], sv[1], flags);
+    return 0;
 }
 
 int NaClHostDescBind(struct NaClHostDesc *d,
-		           const struct sockaddr *addr,
-		           socklen_t addrlen) {
+		           const host_sockaddr *addr,
+		           host_socklen_t addrlen) {
 	int rv = lind_bind(d->d, addr, addrlen);
 	if(rv<0) {
 		return -NaClXlateErrno(errno);
@@ -639,8 +670,8 @@ int NaClHostDescListen(struct NaClHostDesc *d,
 }
 
 int NaClHostDescAccept(struct NaClHostDesc *d,
-		               const struct sockaddr *addr,
-		               socklen_t addrlen,
+		               const host_sockaddr *addr,
+		               host_socklen_t* addrlen,
 		               struct NaClHostDesc* result) {
 	int host_desc = lind_accept(d->d, addr, addrlen);
 	int flags = NACL_ABI_O_RDWR;
@@ -651,8 +682,8 @@ int NaClHostDescAccept(struct NaClHostDesc *d,
 }
 
 int NaClHostDescConnect(struct NaClHostDesc* d,
-		             const struct sockaddr *addr,
-                     socklen_t addrlen) {
+		             const host_sockaddr *addr,
+                     host_socklen_t addrlen) {
 	int rv = lind_connect(d->d, addr, addrlen);
 	if(rv<0) {
 		return -NaClXlateErrno(errno);
@@ -661,8 +692,8 @@ int NaClHostDescConnect(struct NaClHostDesc* d,
 }
 
 int NaClHostDescGetPeerName(struct NaClHostDesc* d,
-		                    struct sockaddr *addr,
-		                    socklen_t *addrlen) {
+		                    host_sockaddr *addr,
+		                    host_socklen_t *addrlen) {
 	int rv = lind_getpeername(d->d, addr, addrlen);
 	if(rv<0) {
 		return -NaClXlateErrno(errno);
@@ -671,8 +702,8 @@ int NaClHostDescGetPeerName(struct NaClHostDesc* d,
 }
 
 int NaClHostDescGetSockName(struct NaClHostDesc* d,
-		                 struct sockaddr *addr,
-		                 socklen_t *addrlen) {
+		                 host_sockaddr *addr,
+		                 host_socklen_t *addrlen) {
 	int rv = lind_getsockname(d->d, addr, addrlen);
 	if(rv<0) {
 		return -NaClXlateErrno(errno);
@@ -696,8 +727,8 @@ ssize_t NaClHostDescSendTo(struct NaClHostDesc* d,
 				 const void *buf,
 				 size_t len,
 				 int flags,
-				 const struct sockaddr *dest_addr,
-				 socklen_t addrlen) {
+				 const host_sockaddr *dest_addr,
+				 host_socklen_t addrlen) {
 	ssize_t rv = lind_sendto(d->d, buf, len, flags, dest_addr, addrlen);
 	if(rv<0) {
 		return -NaClXlateErrno(errno);
@@ -706,7 +737,7 @@ ssize_t NaClHostDescSendTo(struct NaClHostDesc* d,
 }
 
 ssize_t NaClHostDescSendMsg(struct NaClHostDesc* d,
-				  const struct msghdr *msg,
+				  const host_msghdr *msg,
 				  int flags) {
 	ssize_t rv = lind_sendmsg(d->d, msg, flags);
 	if(rv<0) {
@@ -730,8 +761,8 @@ ssize_t NaClHostDescRecvFrom(struct NaClHostDesc* d,
 				   void *buf,
 				   size_t len,
 				   int flags,
-				   struct sockaddr *src_addr,
-				   socklen_t *addrlen) {
+				   host_sockaddr *src_addr,
+				   host_socklen_t *addrlen) {
 	ssize_t rv = lind_recvfrom(d->d, buf, len, flags, src_addr, addrlen);
 	if(rv<0) {
 		return -NaClXlateErrno(errno);
@@ -740,7 +771,7 @@ ssize_t NaClHostDescRecvFrom(struct NaClHostDesc* d,
 }
 
 ssize_t NaClHostDescRecvMsg(struct NaClHostDesc* d,
-				  struct msghdr *msg,
+				  host_msghdr *msg,
 				  int flags) {
 	ssize_t rv = lind_recvmsg(d->d, msg, flags);
 	if(rv<0) {
@@ -753,7 +784,7 @@ int NaClHostDescGetSockOpt(struct NaClHostDesc* d,
 					int level,
 					int optname,
 					void *optval,
-					socklen_t *optlen) {
+					host_socklen_t *optlen) {
 	int rv = lind_getsockopt(d->d, level, optname, optval, optlen);
 	if(rv<0) {
 		return -NaClXlateErrno(errno);
@@ -765,7 +796,7 @@ int NaClHostDescSetSockOpt(struct NaClHostDesc* d,
 					 int level,
 					 int optname,
 					 const void *optval,
-					 socklen_t optlen) {
+					 host_socklen_t optlen) {
 	int rv = lind_setsockopt(d->d, level, optname, optval, optlen);
 	if(rv<0) {
 		return -NaClXlateErrno(errno);
@@ -773,10 +804,10 @@ int NaClHostDescSetSockOpt(struct NaClHostDesc* d,
 	return 0;
 }
 
-int NaClHostDescEpollCtrl(struct NaClHostDesc* d,
+int NaClHostDescEpollCtl(struct NaClHostDesc* d,
 					int op,
 					struct NaClHostDesc* fd,
-					struct epoll_event *event) {
+					host_epoll_event *event) {
 	int rv = lind_epoll_ctl(d->d, op, fd->d, event);
 	if(rv<0) {
 		return -NaClXlateErrno(errno);
@@ -795,7 +826,7 @@ int NaClHostDescEpollCreate(struct NaClHostDesc* d,
 }
 
 int NaClHostDescEpollWait(struct NaClHostDesc* d,
-                          struct epoll_event *events,
+                          host_epoll_event *events,
                           int maxevents,
                           int timeout) {
     int rv = lind_epoll_wait(d->d, events, maxevents, timeout);
@@ -823,9 +854,17 @@ int NaClHostDescFcntl(struct NaClHostDesc* d,
 
 int NaClHostDescSelect(int nfds, fd_set *readfds, fd_set *writefds,
                   fd_set *exceptfds, struct timeval *timeout) {
-    return lind_select(nfds, readfds, writefds, exceptfds, timeout);
+    int rv = lind_select(nfds, readfds, writefds, exceptfds, timeout);
+    if (rv < 0) {
+        return -NaClXlateErrno(errno);
+    }
+    return rv;
 }
 
-int NaClHostDescPoll(struct pollfd *fds, nfds_t nfds, int timeout) {
-    return lind_poll(fds, nfds, timeout);
+int NaClHostDescPoll(host_pollfd *fds, host_nfds_t nfds, int timeout) {
+    int rv = lind_poll(fds, nfds, timeout);
+    if (rv < 0) {
+        return -NaClXlateErrno(errno);
+    }
+    return rv;
 }

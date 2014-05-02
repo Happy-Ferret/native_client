@@ -303,7 +303,7 @@ static struct NaClDescVtbl const kNaClDescConnCapFdVtbl = {
   NaClDescSockRecvMsgNotImplemented,
   NaClDescGetSockOptNotImplemented,
   NaClDescSetSockOptNotImplemented,
-  NaClDescEpollCtrlNotImplemented,
+  NaClDescEpollCtlNotImplemented,
   NaClDescEpollWaitNotImplemented,
   NaClDescFcntlNotImplemented,
   NACL_DESC_CONN_CAP_FD,

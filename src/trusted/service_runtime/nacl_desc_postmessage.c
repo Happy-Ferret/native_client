@@ -170,7 +170,7 @@ static struct NaClDescVtbl const kNaClDescPostMessageVtbl = {
   NaClDescSockRecvMsgNotImplemented,
   NaClDescGetSockOptNotImplemented,
   NaClDescSetSockOptNotImplemented,
-  NaClDescEpollCtrlNotImplemented,
+  NaClDescEpollCtlNotImplemented,
   NaClDescEpollWaitNotImplemented,
   NaClDescFcntlNotImplemented,
   NACL_DESC_DEVICE_POSTMESSAGE,

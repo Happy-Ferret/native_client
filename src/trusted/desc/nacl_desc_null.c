@@ -186,7 +186,7 @@ static struct NaClDescVtbl const kNaClDescNullVtbl = {
   NaClDescSockRecvMsgNotImplemented,
   NaClDescGetSockOptNotImplemented,
   NaClDescSetSockOptNotImplemented,
-  NaClDescEpollCtrlNotImplemented,
+  NaClDescEpollCtlNotImplemented,
   NaClDescEpollWaitNotImplemented,
   NaClDescFcntlNotImplemented,
   NACL_DESC_NULL,

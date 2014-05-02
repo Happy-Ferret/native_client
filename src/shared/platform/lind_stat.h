@@ -69,5 +69,61 @@ struct lind_statfs
     int64_t f_spare[4];
   };
 
+typedef union lind_epoll_data
+{
+  void *ptr;
+  int fd;
+  uint32_t u32;
+  uint64_t u64;
+} lind_epoll_data_t;
+
+struct lind_epoll_event
+{
+  uint32_t events;  /* Epoll events */
+  lind_epoll_data_t data;    /* User data variable */
+};
+
+typedef unsigned long int lind_nfds_t;
+
+struct lind_pollfd
+{
+int fd;         /* File descriptor to poll.  */
+short int events;       /* Types of events poller cares about.  */
+short int revents;      /* Types of events that actually occurred.  */
+};
+
+typedef unsigned short int lind_sa_family_t;
+
+struct lind_sockaddr
+{
+    lind_sa_family_t sa_family; /* Common data: address family and length.  */
+    char sa_data[14];       /* Address data.  */
+};
+
+typedef unsigned int lind_socklen_t;
+
+struct lind_iovec
+{
+    void *iov_base; /* Pointer to data.  */
+    size_t iov_len; /* Length of data.  */
+};
+
+struct lind_msghdr
+{
+    void *msg_name;     /* Address to send to/receive from.  */
+    lind_socklen_t msg_namelen;  /* Length of address data.  */
+
+    struct lind_iovec *msg_iov;  /* Vector of data to send/receive into.  */
+    size_t msg_iovlen;      /* Number of elements in the vector.  */
+
+    void *msg_control;      /* Ancillary data (eg BSD filedesc passing). */
+    size_t msg_controllen;  /* Ancillary data buffer length.
+                   !! The type should be socklen_t but the
+                   definition of the kernel is incompatible
+                   with this.  */
+
+    int msg_flags;      /* Flags on received message.  */
+};
+
 
 #endif /* LIND_STAT_H_ */

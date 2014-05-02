@@ -392,11 +392,16 @@ struct NaClDescVtbl {
    */
 
   int (*SelectAdd)(struct NaClDesc *vself,
-		                   fd_set* set);
+		                   fd_set* set,
+		                   int nacl_desc,
+		                   int* map_hd_to_nd,
+		                   size_t map_size,
+		                   uint32_t* maxhfd);
 
   int (*PollWatch)(struct NaClDesc* vself,
 		            struct pollfd* pfd,
-		            short int events);
+                    int* map_hd_to_nd,
+                    size_t map_size);
 
   /*
    * We put "Sock" in front of the function names to avoid
@@ -412,7 +417,7 @@ struct NaClDescVtbl {
 
   int (*SockAccept)(struct NaClDesc* vself,
 		             const struct sockaddr *addr,
-		             socklen_t addrlen,
+		             socklen_t* addrlen,
 		             struct NaClDesc** result);
 
   int (*SockConnect)(struct NaClDesc* vself,
@@ -472,7 +477,7 @@ struct NaClDescVtbl {
 				         socklen_t optlen);
 
 
-  int (*EpollCtrl)(struct NaClDesc* vself,
+  int (*EpollCtl)(struct NaClDesc* vself,
 		                int op,
 		                struct NaClDesc* vfd,
 		                struct epoll_event *event);
@@ -769,11 +774,16 @@ int NaClDescSemWaitNotImplemented(struct NaClDesc *vself);
 int NaClDescGetValueNotImplemented(struct NaClDesc  *vself);
 
 int NaClDescSelectAddNotImplemented(struct NaClDesc   *vself,
-                                   fd_set* set);
+                                   fd_set* set,
+                                   int nacl_desc,
+                                   int* map_hd_to_nd,
+                                   size_t map_size,
+                                   uint32_t* maxhfd);
 
 int NaClDescPollWatchNotImplemented(struct NaClDesc* vself,
                 struct pollfd* pfd,
-                short int events);
+                int* map_hd_to_nd,
+                size_t map_size);
 
 int NaClDescBindNotImplemented(struct NaClDesc* vself,
                const struct sockaddr *addr,
@@ -784,7 +794,7 @@ int NaClDescListenNotImplemented(struct NaClDesc* vself,
 
 int NaClDescAcceptNotImplemented(struct NaClDesc* vself,
                  const struct sockaddr *addr,
-                 socklen_t addrlen,
+                 socklen_t* addrlen,
                  struct NaClDesc** result);
 
 int NaClDescConnectNotImplemented(struct NaClDesc* vself,
@@ -843,7 +853,7 @@ int NaClDescSetSockOptNotImplemented(struct NaClDesc* vself,
                      const void *optval,
                      socklen_t optlen);
 
-int NaClDescEpollCtrlNotImplemented(struct NaClDesc* vself,
+int NaClDescEpollCtlNotImplemented(struct NaClDesc* vself,
                     int op,
                     struct NaClDesc* vfd,
                     struct epoll_event *event);

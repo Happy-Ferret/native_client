@@ -313,25 +313,28 @@ static int NaClDescIoDescFstat(struct NaClDesc         *vself,
 }
 
 static int NaClDescIoDescSelectAdd(struct NaClDesc         *vself,
-		                           fd_set* set) {
+		                           fd_set* set,
+                                   int nacl_desc,
+                                   int* map_hd_to_nd,
+                                   size_t map_size,
+                                   uint32_t* maxhfd) {
 	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
-	NaClHostDescSelectAdd(self->hd, set);
-	return 0;
+	return NaClHostDescSelectAdd(self->hd, set, nacl_desc, map_hd_to_nd, map_size, maxhfd);
 }
 
 static int NaClDescIoDescPollWatch(struct NaClDesc* vself,
 				struct pollfd* pfd,
-				short int events) {
+                int* map_hd_to_nd,
+                size_t map_size) {
 	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
-	NaClHostDescPollWatch(self->hd, pfd, events);
-	return 0;
+	return NaClHostDescPollWatch(self->hd, (host_pollfd*)pfd, map_hd_to_nd, map_size);
 }
 
 static int NaClDescIoDescBind(struct NaClDesc* vself,
 			   const struct sockaddr *addr,
 			   socklen_t addrlen) {
 	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
-	return NaClHostDescBind(self->hd, addr, addrlen);
+	return NaClHostDescBind(self->hd, (host_sockaddr *)addr, addrlen);
 }
 
 static int NaClDescIoDescListen(struct NaClDesc* vself,
@@ -342,7 +345,7 @@ static int NaClDescIoDescListen(struct NaClDesc* vself,
 
 static int NaClDescIoDescAccept(struct NaClDesc* vself,
 				 const struct sockaddr *addr,
-				 socklen_t addrlen,
+				 socklen_t* addrlen,
 				 struct NaClDesc** result) {
 	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
 	int retval;
@@ -364,11 +367,10 @@ static int NaClDescIoDescAccept(struct NaClDesc* vself,
         retval = -NACL_ABI_ENOMEM;
         goto cleanup;
     }
-	retval = NaClHostDescAccept(self->hd, addr, addrlen, hfd);
+	retval = NaClHostDescAccept(self->hd, (host_sockaddr *)addr, (host_socklen_t*)addrlen, hfd);
 	if(retval<0) {
 	    goto cleanup;
 	}
-	retval = NaClDescIoDescCtor(fd, hfd);
 	if(NaClDescIoDescCtor(fd, hfd)<0) {
 	    retval = -NACL_ABI_ENOMEM;
         goto cleanup;
@@ -391,21 +393,21 @@ static int NaClDescIoDescConnect(struct NaClDesc* vself,
 				 const struct sockaddr *addr,
 				 socklen_t addrlen) {
 	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
-	return NaClHostDescConnect(self->hd, addr, addrlen);
+	return NaClHostDescConnect(self->hd, (host_sockaddr*)addr, addrlen);
 }
 
 static int NaClDescIoDescGetPeerName(struct NaClDesc* vself,
 					 struct sockaddr *addr,
 					 socklen_t *addrlen) {
 	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
-	return NaClHostDescGetPeerName(self->hd, addr, addrlen);
+	return NaClHostDescGetPeerName(self->hd, (host_sockaddr *)addr, (host_socklen_t*)addrlen);
 }
 
 static int NaClDescIoDescGetSockName(struct NaClDesc* vself,
 					 struct sockaddr *addr,
 					 socklen_t *addrlen) {
 	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
-	return NaClHostDescGetSockName(self->hd, addr, addrlen);
+	return NaClHostDescGetSockName(self->hd, (host_sockaddr *)addr, (host_socklen_t*)addrlen);
 }
 
 static ssize_t NaClDescIoDescSend(struct NaClDesc* vself,
@@ -423,14 +425,14 @@ static ssize_t NaClDescIoDescSendTo(struct NaClDesc* vself,
 				 const struct sockaddr *dest_addr,
 				 socklen_t addrlen) {
 	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
-	return NaClHostDescSendTo(self->hd, buf, len, flags, dest_addr, addrlen);
+	return NaClHostDescSendTo(self->hd, buf, len, flags, (host_sockaddr *)dest_addr, addrlen);
 }
 
 static ssize_t NaClDescIoDescSendMsg(struct NaClDesc* vself,
 				  const struct msghdr *msg,
 				  int flags) {
 	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
-	return NaClHostDescSendMsg(self->hd, msg, flags);
+	return NaClHostDescSendMsg(self->hd, (host_msghdr *)msg, flags);
 }
 
 static ssize_t NaClDescIoDescRecv(struct NaClDesc* vself,
@@ -448,14 +450,14 @@ static ssize_t NaClDescIoDescRecvFrom(struct NaClDesc* vself,
 				   struct sockaddr *src_addr,
 				   socklen_t *addrlen) {
 	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
-	return NaClHostDescRecvFrom(self->hd, buf, len, flags, src_addr, addrlen);
+	return NaClHostDescRecvFrom(self->hd, buf, len, flags, (host_sockaddr *)src_addr, (host_socklen_t*)addrlen);
 }
 
 static ssize_t NaClDescIoDescRecvMsg(struct NaClDesc* vself,
 				  struct msghdr *msg,
 				  int flags) {
 	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
-	return NaClHostDescRecvMsg(self->hd, msg, flags);
+	return NaClHostDescRecvMsg(self->hd, (host_msghdr*)msg, flags);
 }
 
 static int NaClDescIoDescGetSockOpt(struct NaClDesc* vself,
@@ -464,7 +466,7 @@ static int NaClDescIoDescGetSockOpt(struct NaClDesc* vself,
 					void *optval,
 					socklen_t *optlen) {
 	struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
-	return NaClHostDescGetSockOpt(self->hd, level, optname, optval, optlen);
+	return NaClHostDescGetSockOpt(self->hd, level, optname, optval, (host_socklen_t*)optlen);
 }
 
 static int NaClDescIoDescSetSockOpt(struct NaClDesc* vself,
@@ -476,13 +478,13 @@ static int NaClDescIoDescSetSockOpt(struct NaClDesc* vself,
     return NaClHostDescSetSockOpt(self->hd, level, optname, optval, optlen);
 }
 
-static int NaClDescIoDescEpollCtrl(struct NaClDesc* vself,
+static int NaClDescIoDescEpollCtl(struct NaClDesc* vself,
                     int op,
                     struct NaClDesc* vfd,
                     struct epoll_event *event) {
     struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
     struct NaClDescIoDesc *fd = (struct NaClDescIoDesc *) vfd;
-    return NaClHostDescEpollCtrl(self->hd, op, fd->hd, event);
+    return NaClHostDescEpollCtl(self->hd, op, fd->hd, (host_epoll_event*)event);
 }
 
 static int NaClDescIoDescEpollWait(struct NaClDesc* vself,
@@ -490,7 +492,7 @@ static int NaClDescIoDescEpollWait(struct NaClDesc* vself,
                     int maxevents,
                     int timeout) {
     struct NaClDescIoDesc *self = (struct NaClDescIoDesc *) vself;
-    return NaClHostDescEpollWait(self->hd, events, maxevents, timeout);
+    return NaClHostDescEpollWait(self->hd, (host_epoll_event*)events, maxevents, timeout);
 }
 
 static int NaClDescIoDescFcntl(struct NaClDesc* vself,
@@ -638,7 +640,7 @@ static struct NaClDescVtbl const kNaClDescIoDescVtbl = {
   NaClDescIoDescRecvMsg,
   NaClDescIoDescGetSockOpt,
   NaClDescIoDescSetSockOpt,
-  NaClDescIoDescEpollCtrl,
+  NaClDescIoDescEpollCtl,
   NaClDescIoDescEpollWait,
   NaClDescIoDescFcntl,
   NACL_DESC_HOST_IO,

@@ -16,17 +16,11 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <sys/poll.h>
-#include <sys/epoll.h>
 #include <unistd.h>
 #include <stdint.h>
 #include <Python.h>
 
 #include "native_client/src/shared/platform/lind_stat.h"
-
-#if NACL_OSX
-#define sockaddr_in sockaddr
-#define __SOCKADDR_ARG struct sockaddr
-#endif
 
 #define LIND_debug_noop                 1
 #define LIND_safe_fs_access             2
@@ -117,24 +111,24 @@ int lind_getdents (unsigned int fd, char *dirp,
 int lind_fcntl_get (int fd, int cmd);
 int lind_fcntl_set (int fd, int cmd, long set_op);
 int lind_socket (int domain, int type, int protocol);
-int lind_bind (int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+int lind_bind (int sockfd, const struct lind_sockaddr *addr, lind_socklen_t addrlen);
 ssize_t lind_send (int sockfd, const void *buf, size_t len, int flags);
 ssize_t lind_recv (int sockfd, void *buf, size_t len, int flags);
-int lind_connect (int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+int lind_connect (int sockfd, const struct lind_sockaddr *addr, lind_socklen_t addrlen);
 int lind_listen (int sockfd, int backlog);
-ssize_t lind_sendto (int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen);
-ssize_t lind_recvfrom (int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t* addrlen);
-ssize_t lind_sendmsg(int sockfd, const struct msghdr *msg, int flags);
-ssize_t lind_recvmsg(int sockfd, struct msghdr *msg, int flags);
-int lind_accept (int sockfd, const struct sockaddr *addr, socklen_t addrlen);
-int lind_getpeername(int sockfd, struct sockaddr* addr, socklen_t * addrlen);
-int lind_getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
-int lind_setsockopt (int sockfd, int level, int optname, const void *optval, socklen_t optlen);
-int lind_getsockopt (int sockfd, int level, int optname, void *optval, socklen_t* optlen);
+ssize_t lind_sendto (int sockfd, const void *buf, size_t len, int flags, const struct lind_sockaddr *dest_addr, lind_socklen_t addrlen);
+ssize_t lind_recvfrom (int sockfd, void *buf, size_t len, int flags, struct lind_sockaddr *src_addr, lind_socklen_t* addrlen);
+ssize_t lind_sendmsg(int sockfd, const struct lind_msghdr *msg, int flags);
+ssize_t lind_recvmsg(int sockfd, struct lind_msghdr *msg, int flags);
+int lind_accept (int sockfd, const struct lind_sockaddr *addr, lind_socklen_t* addrlen);
+int lind_getpeername(int sockfd, struct lind_sockaddr* addr, lind_socklen_t * addrlen);
+int lind_getsockname(int sockfd, struct lind_sockaddr *addr, lind_socklen_t *addrlen);
+int lind_setsockopt (int sockfd, int level, int optname, const void *optval, lind_socklen_t optlen);
+int lind_getsockopt (int sockfd, int level, int optname, void *optval, lind_socklen_t* optlen);
 int lind_shutdown (int sockfd, int how);
 int lind_select (int nfds, fd_set * readfds, fd_set * writefds, fd_set * exceptfds, struct timeval *timeout);
 int lind_getifaddrs (int ifaddrs_buf_siz, void *ifaddrs);
-int lind_poll(struct pollfd *fds, nfds_t nfds, int timeout);
+int lind_poll(struct lind_pollfd *fds, lind_nfds_t nfds, int timeout);
 int lind_socketpair (int domain, int type, int protocol, int *fds);
 int lind_getuid (uid_t * buf);
 int lind_geteuid (uid_t * buf);
@@ -144,7 +138,7 @@ int lind_flock (int fd, int operation);
 char* lind_getcwd(char* buf, size_t size);
 int lind_fcntl(int fd, int cmd, ...);
 int lind_epoll_create(int size);
-int lind_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
-int lind_epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout);
+int lind_epoll_ctl(int epfd, int op, int fd, struct lind_epoll_event *event);
+int lind_epoll_wait(int epfd, struct lind_epoll_event *events, int maxevents, int timeout);
 
 #endif /* LIND_PLATFORM_H_ */

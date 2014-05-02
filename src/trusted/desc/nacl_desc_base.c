@@ -593,8 +593,16 @@ int NaClDescGetValueNotImplemented(struct NaClDesc  *vself) {
 }
 
 int NaClDescSelectAddNotImplemented(struct NaClDesc         *vself,
-                                   fd_set* set) {
+                                   fd_set* set,
+                                   int nacl_desc,
+                                   int* map_hd_to_nd,
+                                   size_t map_size,
+                                   uint32_t* maxhfd) {
     UNREFERENCED_PARAMETER(set);
+    UNREFERENCED_PARAMETER(nacl_desc);
+    UNREFERENCED_PARAMETER(map_hd_to_nd);
+    UNREFERENCED_PARAMETER(map_size);
+    UNREFERENCED_PARAMETER(maxhfd);
     NaClLog(LOG_ERROR,
           "SelectAdd method is not implemented for object of type %s\n",
           NaClDescTypeString(((struct NaClDescVtbl const *)
@@ -604,9 +612,11 @@ int NaClDescSelectAddNotImplemented(struct NaClDesc         *vself,
 
 int NaClDescPollWatchNotImplemented(struct NaClDesc* vself,
                 struct pollfd* pfd,
-                short int events) {
+                int* map_hd_to_nd,
+                size_t map_size) {
     UNREFERENCED_PARAMETER(pfd);
-    UNREFERENCED_PARAMETER(events);
+    UNREFERENCED_PARAMETER(map_hd_to_nd);
+    UNREFERENCED_PARAMETER(map_size);
     NaClLog(LOG_ERROR,
           "PollWatch method is not implemented for object of type %s\n",
           NaClDescTypeString(((struct NaClDescVtbl const *)
@@ -638,7 +648,7 @@ int NaClDescListenNotImplemented(struct NaClDesc* vself,
 
 int NaClDescAcceptNotImplemented(struct NaClDesc* vself,
                  const struct sockaddr *addr,
-                 socklen_t addrlen,
+                 socklen_t* addrlen,
                  struct NaClDesc** result) {
     UNREFERENCED_PARAMETER(addr);
     UNREFERENCED_PARAMETER(addrlen);
@@ -806,7 +816,7 @@ int NaClDescSetSockOptNotImplemented(struct NaClDesc* vself,
     return -NACL_ABI_EINVAL;
 }
 
-int NaClDescEpollCtrlNotImplemented(struct NaClDesc* vself,
+int NaClDescEpollCtlNotImplemented(struct NaClDesc* vself,
                     int op,
                     struct NaClDesc* vfd,
                     struct epoll_event *event) {
@@ -814,7 +824,7 @@ int NaClDescEpollCtrlNotImplemented(struct NaClDesc* vself,
     UNREFERENCED_PARAMETER(vfd);
     UNREFERENCED_PARAMETER(event);
     NaClLog(LOG_ERROR,
-          "EpollCtrl method is not implemented for object of type %s\n",
+          "EpollCtl method is not implemented for object of type %s\n",
           NaClDescTypeString(((struct NaClDescVtbl const *)
                               vself->base.vtbl)->typeTag));
     return -NACL_ABI_EINVAL;
@@ -1009,7 +1019,7 @@ struct NaClDescVtbl const kNaClDescVtbl = {
   NaClDescSockRecvMsgNotImplemented,
   NaClDescGetSockOptNotImplemented,
   NaClDescSetSockOptNotImplemented,
-  NaClDescEpollCtrlNotImplemented,
+  NaClDescEpollCtlNotImplemented,
   NaClDescEpollWaitNotImplemented,
   NaClDescFcntlNotImplemented,
   (enum NaClDescTypeTag) -1,  /* NaClDesc is an abstract base class */

@@ -437,7 +437,7 @@ int lind_socket (int domain, int type, int protocol) {
     return ParseResponse(MakeLindSysCall(LIND_safe_net_socket, "[iii]", domain, type, protocol), 0);
 }
 
-int lind_bind (int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+int lind_bind (int sockfd, const struct lind_sockaddr *addr, lind_socklen_t addrlen) {
     return ParseResponse(MakeLindSysCall(LIND_safe_net_bind, "[iis#]", sockfd, addrlen, addr, addrlen), 0);
 }
 
@@ -449,7 +449,7 @@ ssize_t lind_recv (int sockfd, void *buf, size_t len, int flags) {
     return ParseResponse(MakeLindSysCall(LIND_safe_net_recv, "[iii]", sockfd, len, flags), 1, buf, len);
 }
 
-int lind_connect (int sockfd, const struct sockaddr *src_addr, socklen_t addrlen) {
+int lind_connect (int sockfd, const struct lind_sockaddr *src_addr, lind_socklen_t addrlen) {
     return ParseResponse(MakeLindSysCall(LIND_safe_net_recv, "[iis#]", sockfd, addrlen, src_addr, addrlen), 0);
 }
 
@@ -457,29 +457,29 @@ int lind_listen (int sockfd, int backlog) {
     return ParseResponse(MakeLindSysCall(LIND_safe_net_listen, "[ii]", sockfd, backlog), 0);
 }
 
-ssize_t lind_sendto (int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen) {
+ssize_t lind_sendto (int sockfd, const void *buf, size_t len, int flags, const struct lind_sockaddr *dest_addr, lind_socklen_t addrlen) {
     UNREFERENCED_PARAMETER(flags);
     return ParseResponse(MakeLindSysCall(LIND_safe_net_sendto, "[iiiis#s#]", sockfd, len, addrlen, dest_addr, addrlen, buf, len), 0);
 }
 
-int lind_accept (int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+int lind_accept (int sockfd, const struct lind_sockaddr *addr, lind_socklen_t* addrlen) {
     UNREFERENCED_PARAMETER(addr);
-    return ParseResponse(MakeLindSysCall(LIND_safe_net_accept, "[ii]", sockfd, addrlen), 0);
+    return ParseResponse(MakeLindSysCall(LIND_safe_net_accept, "[ii]", sockfd, *addrlen), 0);
 }
 
-int lind_getpeername (int sockfd, struct sockaddr *addr, socklen_t* addrlen) {
+int lind_getpeername (int sockfd, struct lind_sockaddr *addr, lind_socklen_t* addrlen) {
     return ParseResponse(MakeLindSysCall(LIND_safe_net_getpeername, "[ii]", sockfd, *addrlen), 1, addr, *addrlen);
 }
 
-int lind_getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
+int lind_getsockname(int sockfd, struct lind_sockaddr *addr, lind_socklen_t *addrlen) {
     return ParseResponse(MakeLindSysCall(LIND_safe_net_getsockname, "[ii]", sockfd, *addrlen), 1, addr, *addrlen);
 }
 
-int lind_setsockopt (int sockfd, int level, int optname, const void *optval, socklen_t optlen) {
+int lind_setsockopt (int sockfd, int level, int optname, const void *optval, lind_socklen_t optlen) {
     return ParseResponse(MakeLindSysCall(LIND_safe_net_setsockopt, "[iiis#]", sockfd, level, optname, optval, optlen), 0);
 }
 
-int lind_getsockopt (int sockfd, int level, int optname, void *optval, socklen_t* optlen) {
+int lind_getsockopt (int sockfd, int level, int optname, void *optval, lind_socklen_t* optlen) {
     return ParseResponse(MakeLindSysCall(LIND_safe_net_getsockopt, "[iii]", sockfd, level, optname), 1, optval, optlen);
 }
 
@@ -553,12 +553,12 @@ int lind_getifaddrs (int ifaddrs_buf_siz, void *ifaddrs) {
     return ParseResponse(MakeLindSysCall(LIND_safe_net_getifaddrs, "[i]", ifaddrs_buf_siz), 1, ifaddrs, ifaddrs_buf_siz);
 }
 
-ssize_t lind_recvfrom (int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t * addrlen) {
+ssize_t lind_recvfrom (int sockfd, void *buf, size_t len, int flags, struct lind_sockaddr *src_addr, lind_socklen_t * addrlen) {
     return ParseResponse(MakeLindSysCall(LIND_safe_net_recvfrom, "[iiii]", sockfd, len, flags, addrlen), 3, addrlen, sizeof(*addrlen),
             buf, len, src_addr, sizeof(*src_addr));
 }
 
-int lind_poll(struct pollfd *fds, nfds_t nfds, int timeout) {
+int lind_poll(struct lind_pollfd *fds, lind_nfds_t nfds, int timeout) {
     return ParseResponse(MakeLindSysCall(LIND_safe_net_poll, "[iis#]", nfds, timeout, fds, sizeof(struct pollfd)*nfds),
             1, fds, sizeof(struct pollfd)*nfds);
 }
@@ -595,13 +595,13 @@ char* lind_getcwd(char* buf, size_t size) {
 }
 
 
-ssize_t lind_sendmsg(int sockfd, const struct msghdr *msg, int flags) {
+ssize_t lind_sendmsg(int sockfd, const struct lind_msghdr *msg, int flags) {
     UNREFERENCED_PARAMETER(sockfd);
     UNREFERENCED_PARAMETER(msg);
     UNREFERENCED_PARAMETER(flags);
     return 0;
 }
-ssize_t lind_recvmsg(int sockfd, struct msghdr *msg, int flags) {
+ssize_t lind_recvmsg(int sockfd, struct lind_msghdr *msg, int flags) {
     UNREFERENCED_PARAMETER(sockfd);
     UNREFERENCED_PARAMETER(msg);
     UNREFERENCED_PARAMETER(flags);
@@ -613,14 +613,14 @@ int lind_epoll_create(int size) {
     UNREFERENCED_PARAMETER(size);
     return 0;
 }
-int lind_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event) {
+int lind_epoll_ctl(int epfd, int op, int fd, struct lind_epoll_event *event) {
     UNREFERENCED_PARAMETER(epfd);
     UNREFERENCED_PARAMETER(op);
     UNREFERENCED_PARAMETER(fd);
     UNREFERENCED_PARAMETER(event);
     return 0;
 }
-int lind_epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout) {
+int lind_epoll_wait(int epfd, struct lind_epoll_event *events, int maxevents, int timeout) {
     UNREFERENCED_PARAMETER(epfd);
     UNREFERENCED_PARAMETER(events);
     UNREFERENCED_PARAMETER(maxevents);

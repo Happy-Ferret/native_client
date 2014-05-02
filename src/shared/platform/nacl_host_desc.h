@@ -23,10 +23,6 @@
 # include "native_client/src/shared/platform/win/nacl_host_desc_types.h"
 #endif
 
-#include <sys/epoll.h>
-#include <sys/poll.h>
-#include <sys/socket.h>
-
 /*
  * see NACL_MAP_PAGESIZE from nacl_config.h; map operations must be aligned
  */
@@ -61,6 +57,13 @@ typedef struct _stati64 nacl_host_stat_t;
 #else
 # error "what OS?"
 #endif
+
+typedef struct lind_epoll_event host_epoll_event;
+typedef struct lind_pollfd host_pollfd;
+typedef lind_nfds_t host_nfds_t;
+typedef struct lind_sockaddr host_sockaddr;
+typedef struct lind_msghdr host_msghdr;
+typedef lind_socklen_t host_socklen_t;
 
 /*
  * TODO(bsy): it seems like these error functions are useful in more
@@ -343,41 +346,51 @@ int NaClHostDescDup2(struct NaClHostDesc *d,
                      int fd,
                      struct NaClHostDesc *nfd);
 
-void NaClHostDescSelectAdd(struct NaClHostDesc *d,
-                          fd_set* set);
+int NaClHostDescSelectAdd(struct NaClHostDesc *d,
+                          fd_set* set,
+                          int nacl_desc,
+                          int* map_hd_to_nd,
+                          size_t map_size,
+                          uint32_t* maxhfd);
 
-void NaClHostDescPollWatch(struct NaClHostDesc *d,
-                           struct pollfd* pfd,
-                           short int events);
+int NaClHostDescPollWatch(struct NaClHostDesc *d,
+                           host_pollfd* pfd,
+                           int* map_hd_to_nd,
+                           size_t map_size);
 
 int NaClHostDescSocket(struct NaClHostDesc *d,
                        int domain,
                        int type,
                        int protocol);
 
+int NaClHostDescSocketPair(int domain,
+                       int type,
+                       int protocol,
+                       struct NaClHostDesc **d);
+
 int NaClHostDescBind(struct NaClHostDesc *d,
-                   const struct sockaddr *addr,
-                   socklen_t addrlen);
+                   const host_sockaddr *addr,
+                   host_socklen_t addrlen);
 
 int NaClHostDescListen(struct NaClHostDesc *d,
                        int backlog);
 
 int NaClHostDescAccept(struct NaClHostDesc *d,
-                       const struct sockaddr *addr,
-                       socklen_t addrlen,
+                       const host_sockaddr *addr,
+                       host_socklen_t* addrlen,
                        struct NaClHostDesc* result);
 
 int NaClHostDescConnect(struct NaClHostDesc* d,
-                     const struct sockaddr *addr,
-                     socklen_t addrlen);
+                     const host_sockaddr *addr,
+                     host_socklen_t addrlen);
 
 int NaClHostDescGetPeerName(struct NaClHostDesc* d,
-                            struct sockaddr *addr,
-                            socklen_t *addrlen);
+                            host_sockaddr *addr,
+                            host_socklen_t *addrlen);
 
 int NaClHostDescGetSockName(struct NaClHostDesc* d,
-                         struct sockaddr *addr,
-                         socklen_t *addrlen);
+                         host_sockaddr *addr,
+                         host_socklen_t *addrlen);
 
 ssize_t NaClHostDescSend(struct NaClHostDesc* d,
                const void *buf,
@@ -388,11 +401,11 @@ ssize_t NaClHostDescSendTo(struct NaClHostDesc* d,
                  const void *buf,
                  size_t len,
                  int flags,
-                 const struct sockaddr *dest_addr,
-                 socklen_t addrlen);
+                 const host_sockaddr *dest_addr,
+                 host_socklen_t addrlen);
 
 ssize_t NaClHostDescSendMsg(struct NaClHostDesc* d,
-                  const struct msghdr *msg,
+                  const host_msghdr *msg,
                   int flags);
 
 ssize_t NaClHostDescRecv(struct NaClHostDesc* d,
@@ -404,35 +417,35 @@ ssize_t NaClHostDescRecvFrom(struct NaClHostDesc* d,
                    void *buf,
                    size_t len,
                    int flags,
-                   struct sockaddr *src_addr,
-                   socklen_t *addrlen);
+                   host_sockaddr *src_addr,
+                   host_socklen_t *addrlen);
 
 ssize_t NaClHostDescRecvMsg(struct NaClHostDesc* d,
-                  struct msghdr *msg,
+                  host_msghdr *msg,
                   int flags);
 
 int NaClHostDescGetSockOpt(struct NaClHostDesc* d,
                     int level,
                     int optname,
                     void *optval,
-                    socklen_t *optlen);
+                    host_socklen_t *optlen);
 
 int NaClHostDescSetSockOpt(struct NaClHostDesc* d,
                      int level,
                      int optname,
                      const void *optval,
-                     socklen_t optlen);
+                     host_socklen_t optlen);
 
-int NaClHostDescEpollCtrl(struct NaClHostDesc* d,
+int NaClHostDescEpollCtl(struct NaClHostDesc* d,
                     int op,
                     struct NaClHostDesc* fd,
-                    struct epoll_event *event);
+                    host_epoll_event *event);
 
 int NaClHostDescEpollCreate(struct NaClHostDesc* d,
                             int size);
 
 int NaClHostDescEpollWait(struct NaClHostDesc* d,
-                          struct epoll_event *events,
+                          host_epoll_event *events,
                           int maxevents,
                           int timeout);
 
@@ -444,7 +457,7 @@ int NaClHostDescFcntl(struct NaClHostDesc* d,
 int NaClHostDescSelect(int nfds, fd_set *readfds, fd_set *writefds,
                   fd_set *exceptfds, struct timeval *timeout);
 
-int NaClHostDescPoll(struct pollfd *fds, nfds_t nfds, int timeout);
+int NaClHostDescPoll(host_pollfd *fds, host_nfds_t nfds, int timeout);
 
 /*
  * Maps NACI_ABI_ versions of the mmap prot argument to host ABI versions
