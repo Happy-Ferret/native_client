@@ -3,6 +3,8 @@
  *
  *  Created on: Jul 23, 2013
  *      Author: sji
+ *
+ *      These values are according to /lind_glibc/sysdeps/nacl/lind_syscalls.h constants.
  */
 
 #ifndef LIND_PLATFORM_H_
@@ -18,7 +20,6 @@
 #include <sys/poll.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <Python.h>
 
 #include "native_client/src/shared/platform/lind_stat.h"
 
@@ -72,6 +73,9 @@
 #define LIND_safe_fs_flock              54
 #define LIND_safe_fs_rename             55
 
+#define LIND_safe_net_sendmsg           59
+#define LIND_safe_net_recvmsg           60
+
 #define LIND_comp_cia                   105
 #define LIND_comp_call                  106
 #define LIND_comp_accept                107
@@ -81,9 +85,6 @@ int GetHostFdFromLindFd(int lindFd);
 
 int LindPythonInit(void);
 int LindPythonFinalize(void);
-
-PyObject* CallPythonFunc(PyObject* context, const char* func, PyObject* args);
-//int ParseResponse(PyObject* response, int* isError, int* code, char** dataOrMessage, int* len);
 
 ssize_t lind_pread(int fd, void* buf, int count, off_t offset);
 ssize_t lind_pwrite(int fd, const void *buf, int count, off_t offset);

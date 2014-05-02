@@ -2,6 +2,9 @@
  * Copyright (c) 2012 The Native Client Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
+ *
+ * This is a template for auto generated scons-out
+ *
  */
 
 
@@ -46,7 +49,6 @@
 #include "native_client/src/trusted/service_runtime/sel_memory.h"
 #include "native_client/src/trusted/service_runtime/sel_util.h"
 #include "native_client/src/trusted/service_runtime/sys_list_mappings.h"
-#include "native_client/src/trusted/service_runtime/lind_syscalls.h"
 
 #include "native_client/src/trusted/service_runtime/include/bits/mman.h"
 #include "native_client/src/trusted/service_runtime/include/bits/nacl_syscalls.h"

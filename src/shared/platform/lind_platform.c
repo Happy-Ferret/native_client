@@ -595,19 +595,97 @@ char* lind_getcwd(char* buf, size_t size) {
 }
 
 
-ssize_t lind_sendmsg(int sockfd, const struct lind_msghdr *msg, int flags) {
-    UNREFERENCED_PARAMETER(sockfd);
-    UNREFERENCED_PARAMETER(msg);
-    UNREFERENCED_PARAMETER(flags);
-    return 0;
-}
-ssize_t lind_recvmsg(int sockfd, struct lind_msghdr *msg, int flags) {
-    UNREFERENCED_PARAMETER(sockfd);
-    UNREFERENCED_PARAMETER(msg);
-    UNREFERENCED_PARAMETER(flags);
-    return 0;
-}
 
+/**
+ * This function packs the msg_iovec to a string and passes it to be handled by Repy.
+ */
+ssize_t lind_sendmsg(int sockfd, const struct lind_msghdr *msg, int flags) {
+
+  /* Strip the msg->iov vector and extract each individual vector to be joined in a string. */
+  unsigned int i = 0;
+  int total = 0;   /* Total length of all iovec elements. */
+  int * lengths;    /* Length of individual iovec elements. */
+  char * concatenated;
+  char * final_message;
+
+  lengths = malloc(msg->msg_iov->iov_len * sizeof(int));  /* Memory allocation to store the lengths of the individual elements. */
+
+  concatenated = malloc(total + 1);
+
+  for (i = 0; i < msg->msg_iov->iov_len; i++) {
+    lengths[i] = msg->msg_iov[i].iov_len;
+    total += lengths[i];
+  }
+
+  concatenated = malloc(total); /* Memory allocation for the concatenated strings. */
+
+  final_message = concatenated;
+
+  for (i = 0; i < msg->msg_iov->iov_len; i++) {
+    int j;
+    for (j = 0; j < lengths[i]; j++) {
+      memcpy(final_message + j, msg->msg_iov[i].iov_base, msg->msg_iov[i].iov_len);
+
+    }
+
+       final_message += lengths[i];
+
+     }
+
+     free(lengths);
+     free(concatenated);
+
+     return ParseResponse(MakeLindSysCall(LIND_safe_net_sendmsg, "[is#s#is#ii]",
+                                          sockfd, msg->msg_name, msg->msg_namelen, final_message, msg->msg_iovlen,
+                                          msg->msg_control, msg->msg_controllen, msg->msg_flags, flags), 0);
+
+   }
+
+/**
+ * This function delivers the received message from a socket to Repy.
+ */
+ssize_t lind_recvmsg(int sockfd, struct lind_msghdr *msg, int flags) {
+
+  /* Strip the msg->iov vector and extract each individual vector to be joined in a string. */
+  unsigned int i = 0;
+  int total = 0;   /* Total length of all iovec elements. */
+  int * lengths;    /* Length of individual iovec elements. */
+  char * concatenated;
+  char * final_message;
+
+
+  lengths = malloc(msg->msg_iov->iov_len * sizeof(int));  /* Memory allocation to store the lengths of individual elements. */
+
+  concatenated = malloc(total + 1);
+
+
+  for (i = 0; i < msg->msg_iov->iov_len; i++) {
+    lengths[i] = msg->msg_iov[i].iov_len;
+    total += lengths[i];
+  }
+
+  concatenated = malloc(total); /* Memory allocation for the concatenated strings. */
+
+  final_message = concatenated;
+
+  for (i = 0; i < msg->msg_iov->iov_len; i++) {
+    int j;
+    for (j = 0; j < lengths[i]; j++) {
+      memcpy(final_message +j, msg->msg_iov[i].iov_base, msg->msg_iov[i].iov_len);
+    }
+
+    final_message += lengths[i];
+  }
+
+  free(lengths);
+  free(concatenated);
+
+  return ParseResponse(MakeLindSysCall(LIND_safe_net_recvmsg, "[is#s#is#ii]",
+                                       sockfd, msg->msg_name, msg->msg_namelen, final_message,
+                                       msg->msg_iovlen, msg->msg_control, msg->msg_controllen, msg->msg_flags, flags), 0);
+
+
+}
 
 int lind_epoll_create(int size) {
     UNREFERENCED_PARAMETER(size);

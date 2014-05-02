@@ -5,7 +5,7 @@
  */
 
 /*
- * NaCl Simple/secure ELF loader (NaCl SEL).
+ * NaCl Simple/secure ELF loader (NaCl SEL). The main entry point for the binary.
  */
 #include "native_client/src/include/portability.h"
 #include "native_client/src/include/portability_io.h"
@@ -55,7 +55,7 @@
 #include "native_client/src/trusted/service_runtime/sel_qualify.h"
 #include "native_client/src/trusted/service_runtime/win/exception_patch/ntdll_patch.h"
 #include "native_client/src/trusted/service_runtime/win/debug_exception_handler.h"
-#include "native_client/src/trusted/service_runtime/lind_syscalls.h"
+
 
 
 static void (*g_enable_outer_sandbox_func)(void) =
