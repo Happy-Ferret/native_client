@@ -709,7 +709,7 @@ int NaClCreateMainThread(struct NaClApp     *nap,
 
   /* count number of environment strings */
   for (char const *const *pp = envv; pp && *pp; ++pp) {
-    ++envc;
+    envc++;
   }
   /* allocate space to hold length of vectors */
   argv_len = !argc ? 0 : malloc(argc * sizeof *argv_len);
@@ -919,7 +919,7 @@ int NaClCreateMainForkThread(struct NaClApp           *nap_parent,
 
   /* count number of environment strings */
   for (char const *const *pp = envv; pp && *pp; ++pp) {
-    ++envc;
+    envc++;
   }
   /* allocate space to hold length of vectors */
   argv_len = !argc ? 0 : malloc(argc * sizeof *argv_len);

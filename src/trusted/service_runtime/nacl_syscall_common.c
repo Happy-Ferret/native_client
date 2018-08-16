@@ -3921,20 +3921,17 @@ fail:
   return ret;
 }
 
-int32_t NaClSysExecve(struct NaClAppThread  *natp, void *pathname, void *argp, void *envp) {
+int32_t NaClSysExecve(struct NaClAppThread  *natp, void *pathname, void *argv, void *envp) {
   struct NaClApp *nap = natp->nap;
   struct NaClApp *nap_child = 0;
   struct NaClEnvCleanser env_cleanser = {0};
+  char *sys_pathname = (void *)NaClUserToSysAddr(nap, (uintptr_t)pathname);
+  char **sys_envp = (void *)NaClUserToSysAddr(nap, (uintptr_t)envp);
+  char **sys_argv = (void *)NaClUserToSysAddr(nap, (uintptr_t)argv);
+  char *binary = sys_pathname ? strdup(sys_pathname) : 0;
   char **child_argv = 0;
   char **new_argv = 0;
-  char **new_envv = 0;
-  char *sys_pathname = (void *)NaClUserToSysAddr(nap, (uintptr_t)pathname);
-  char *sys_envp = (void *)NaClUserToSysAddr(nap, (uintptr_t)envp);
-  char *sys_argp = (void *)NaClUserToSysAddr(nap, (uintptr_t)argp);
-  char *new_envp = sys_envp ? strdup(sys_envp) : 0;
-  char *new_argp = sys_argp ? strdup(sys_argp) : 0;
-  char *binary = sys_pathname ? strdup(sys_pathname) : 0;
-  char *tmp = 0;
+  char **new_envp = 0;
   int child_argc = 0;
   int new_argc = 0;
   int new_envc = 0;
@@ -3944,27 +3941,27 @@ int32_t NaClSysExecve(struct NaClAppThread  *natp, void *pathname, void *argp, v
 
   /* setup environment */
   NaClEnvCleanserCtor(&env_cleanser, 0);
-  if (new_envp) {
+  if (sys_envp) {
     /* count number of environment strings */
-    new_envc++;
-    tmp = strdup(new_envp);
-    for (char *cur = strtok(tmp, " "); cur; new_envc++, cur = strtok(0, " ")) { /* no-op */ }
-    free(tmp);
-    new_envv = calloc(1 + new_envc, sizeof *new_envv);
-    if (!new_envv) {
+    for (char **pp = sys_envp; *pp; ++pp) {
+      new_envc++;
+    }
+    new_envp = calloc(new_envc + 1, sizeof *new_envp);
+    if (!new_envp) {
       NaClLog(LOG_ERROR, "%s\n", "Failed to allocate new_envv");
       NaClEnvCleanserDtor(&env_cleanser);
       goto fail;
     }
     for (int i = 0; i < new_envc; i++) {
-      char *env = strtok(i ? 0 : new_envp, " ");
-      new_envv[i] = env ? strdup(env) : 0;
+      char *env = (void *)NaClUserToSysAddr(nap, (uintptr_t)sys_envp[i]);
+      env = (uintptr_t)env == kNaClBadAddress ? 0 : env;
+      new_envp[i] = env ? strdup(env) : 0;
       if (!env) {
         break;
       }
     }
-    new_envv[new_envc] = 0;
-    if (!NaClEnvCleanserInit(&env_cleanser, (char const *const *)new_envv, 0)) {
+    new_envp[new_envc] = 0;
+    if (!NaClEnvCleanserInit(&env_cleanser, (char const *const *)new_envp, 0)) {
       NaClLog(LOG_ERROR, "%s\n", "Failed to initialize environment cleanser");
       NaClEnvCleanserDtor(&env_cleanser);
       goto fail;
@@ -3973,23 +3970,23 @@ int32_t NaClSysExecve(struct NaClAppThread  *natp, void *pathname, void *argp, v
   }
 
   /* setup argv and argc */
-  if (!sys_argp) {
+  if (!sys_argv) {
     NaClLog(LOG_ERROR, "%s\n", "Passed a NULL pointer in argp");
     NaClEnvCleanserDtor(&env_cleanser);
     goto fail;
   }
-  new_argc++;
-  tmp = strdup(new_argp);
-  for (char *cur = strtok(tmp, " "); cur; new_argc++, cur = strtok(0, " ")) { /* no-op */ }
-  free(tmp);
-  new_argv = calloc(1 + new_argc, sizeof *new_argv);
+  for (char **pp = sys_argv; *pp; ++pp) {
+    new_argc++;
+  }
+  new_argv = calloc(new_argc + 1, sizeof *new_argv);
   if (!new_argv) {
     NaClLog(LOG_ERROR, "%s\n", "Failed to allocate new_argv");
     NaClEnvCleanserDtor(&env_cleanser);
     goto fail;
   }
   for (int i = 0; i < new_argc; i++) {
-    char *arg = strtok(i ? 0 : new_argp, " ");
+    char *arg = (void *)NaClUserToSysAddr(nap, (uintptr_t)sys_argv[i]);
+    arg = (uintptr_t)arg == kNaClBadAddress ? 0 : arg;
     new_argv[i] = arg ? strdup(arg) : 0;
     if (!arg) {
       break;
@@ -4042,22 +4039,20 @@ int32_t NaClSysExecve(struct NaClAppThread  *natp, void *pathname, void *argp, v
   ret = 0;
 
 fail:
-  for (char **p = new_envv; p && *p; p++) {
-    free(*p);
+  for (char **pp = new_envp; pp && *pp; pp++) {
+    free(*pp);
   }
-  for (char **p = new_argv; p && *p; p++) {
-    free(*p);
+  for (char **pp = new_argv; pp && *pp; pp++) {
+    free(*pp);
   }
-  free(new_envv);
-  free(new_argv);
   free(new_envp);
-  free(new_argp);
+  free(new_argv);
   free(binary);
   return ret;
 }
 
-int32_t NaClSysExecv(struct NaClAppThread  *natp, void *pathname, void *argp) {
-  return NaClSysExecve(natp, pathname, argp, 0);
+int32_t NaClSysExecv(struct NaClAppThread  *natp, void *pathname, void *argv) {
+  return NaClSysExecve(natp, pathname, argv, 0);
 }
 
 #define WAIT_ANY (-1)
