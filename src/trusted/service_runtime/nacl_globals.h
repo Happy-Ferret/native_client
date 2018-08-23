@@ -55,17 +55,19 @@ EXTERN_C_BEGIN
                      | ((uint64_t)(X)[7] << (7 * CHAR_BIT)))
 
 enum {
-        PIPE_NUM_MAX = 1u << 4,
         CACHED_LIB_NUM_MAX = 1u << 5,
         CAGING_LIB_PATH_MAX = 1u << 6,
         FILE_DESC_MAX = 1u << 8,
         CHILD_NUM_MAX = 1u << 8,
         CAGING_FD_NUM  = 1u << 8,
+        PIPE_NUM_MAX = 1u << 8,
         PIPE_BUF_MAX = 1u << 16
 };
 
-// yiwen: define struct for storing the <file_path, mem_addr> relation
-//        which is being used by our "shared libs caching" mechanism
+/*
+ * yiwen: define struct for storing the <file_path, mem_addr> relation
+ *        which is being used by our "shared libs caching" mechanism
+ */
 struct CachedLibTable {
   char path[CAGING_LIB_PATH_MAX];
   void *mem_addr;

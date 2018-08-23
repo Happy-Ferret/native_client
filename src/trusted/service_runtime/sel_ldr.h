@@ -82,6 +82,7 @@ struct NaClValidationMetadata;
 
 struct Pipe {
   bool xfer_done;
+  bool is_closed;
   unsigned char pipe_buf[PIPE_BUF_MAX];
   struct NaClMutex mu;
   struct NaClCondVar cv;
