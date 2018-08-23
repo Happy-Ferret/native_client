@@ -542,9 +542,10 @@ int32_t NaClSysNameService(struct NaClAppThread *natp,
 }
 
 int32_t NaClSysDup(struct NaClAppThread *natp, int oldfd) {
-  struct NaClApp  *nap = natp->nap;
-  int             ret, newfd;
+  struct NaClApp *nap = natp->nap;
   struct NaClDesc *old_nd;
+  int newfd;
+  int ret;
 
   NaClLog(1, "NaClSysDup(0x%08"NACL_PRIxPTR", %d)\n", (uintptr_t)natp, oldfd);
 
@@ -563,7 +564,6 @@ int32_t NaClSysDup(struct NaClAppThread *natp, int oldfd) {
     goto out;
   }
   ret = newfd = NaClSetAvail(nap, old_nd);
-  NaClSetDesc(nap, newfd, old_nd);
   fd_cage_table[nap->cage_id][newfd] = fd_cage_table[nap->cage_id][oldfd];
   nap->fd++;
 
@@ -575,7 +575,8 @@ int32_t NaClSysDup2(struct NaClAppThread  *natp,
                     int                   oldfd,
                     int                   newfd) {
   struct NaClApp *nap = natp->nap;
-  int            ret;
+  struct NaClDesc *old_nd;
+  int ret;
 
   NaClLog(1, "%s\n", "[dup2] Entered dup2!");
   NaClLog(1, "[dup2] cage id = %d \n", nap->cage_id);
@@ -596,6 +597,11 @@ int32_t NaClSysDup2(struct NaClAppThread  *natp,
     ret = -NACL_ABI_EBADF;
     goto out;
   }
+  if (!(old_nd = NaClGetDesc(nap, oldfd))) {
+    ret= -NACL_ABI_EBADF;
+    goto out;
+  }
+  NaClSetDesc(nap, newfd, old_nd);
   fd_cage_table[nap->cage_id][newfd] = fd_cage_table[nap->cage_id][oldfd];
   ret = newfd;
   nap->fd++;
@@ -609,8 +615,9 @@ int32_t NaClSysDup3(struct NaClAppThread  *natp,
                     int                   oldfd,
                     int                   newfd,
                     int                   flags) {
-  struct NaClApp  *nap = natp->nap;
-  int             ret;
+  struct NaClApp *nap = natp->nap;
+  struct NaClDesc *old_nd;
+  int ret;
 
   NaClLog(1, "%s\n", "[dup3] Entered dup3!");
   NaClLog(1, "[dup3] cage id = %d \n", nap->cage_id);
@@ -636,6 +643,11 @@ int32_t NaClSysDup3(struct NaClAppThread  *natp,
     ret = -NACL_ABI_EBADF;
     goto out;
   }
+  if (!(old_nd = NaClGetDesc(nap, oldfd))) {
+    ret= -NACL_ABI_EBADF;
+    goto out;
+  }
+  NaClSetDesc(nap, newfd, old_nd);
   fd_cage_table[nap->cage_id][nap->fd] = fd_cage_table[nap->cage_id][oldfd];
   ret = newfd;
   nap->fd++;
