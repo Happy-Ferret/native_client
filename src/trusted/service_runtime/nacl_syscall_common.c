@@ -963,13 +963,28 @@ int32_t NaClSysRead(struct NaClAppThread  *natp,
                     (uint32_t) (uintptr_t) buf,
                     (uint32_t) (((uintptr_t) buf) + count - 1));
   read_result = ((struct NaClDescVtbl const *)ndp->base.vtbl)->Read(ndp, (void *)sysaddr, count);
+
   /* special case for pipe() */
   if (read_result == -NACL_ABI_ENOSYS) {
-    read_result = read(fd, (void *)sysaddr, count);
-    if (read_result < 0) {
-      read_result = -errno;
+    read_result = 0;
+    for (;;) {
+      ssize_t ret;
+      if ((ret = read(fd, (void *)sysaddr, count - read_result)) < 0) {
+        if (errno == EINTR || errno == EAGAIN) {
+          continue;
+        }
+        /* error during write() */
+        read_result = -errno;
+        break;
+      }
+      /* done reading */
+      if (!ret) {
+        break;
+      }
+      read_result += ret;
     }
   }
+
   NaClVmIoHasEnded(nap,
                     (uint32_t) (uintptr_t) buf,
                     (uint32_t) (((uintptr_t) buf) + count - 1));
@@ -1060,13 +1075,28 @@ int32_t NaClSysWrite(struct NaClAppThread *natp,
                     (uint32_t)(uintptr_t)buf,
                     (uint32_t)(((uintptr_t)buf) + count - 1));
   write_result = ((struct NaClDescVtbl const *)ndp->base.vtbl)->Write(ndp, (void *)sysaddr, count);
+
   /* special case for pipe() */
   if (write_result == -NACL_ABI_ENOSYS) {
-    write_result = write(fd, (void *)sysaddr, count);
-    if (write_result < 0) {
-      write_result = -errno;
+    write_result = 0;
+    for (;;) {
+      ssize_t ret;
+      if ((ret = write(fd, (void *)sysaddr, count - write_result)) < 0) {
+        if (errno == EINTR || errno == EAGAIN) {
+          continue;
+        }
+        /* error during write() */
+        write_result = -errno;
+        break;
+      }
+      /* done writeing */
+      if (!ret) {
+        break;
+      }
+      write_result += ret;
     }
   }
+
   NaClVmIoHasEnded(nap,
                    (uint32_t)(uintptr_t)buf,
                    (uint32_t)(((uintptr_t)buf) + count - 1));
