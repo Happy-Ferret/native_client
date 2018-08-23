@@ -83,9 +83,7 @@ struct NaClValidationMetadata;
 struct Pipe {
   bool xfer_done;
   bool is_closed;
-  unsigned char pipe_buf[PIPE_BUF_MAX];
-  struct NaClMutex mu;
-  struct NaClCondVar cv;
+  struct NaClFastMutex mu;
 };
 
 extern volatile sig_atomic_t fork_num;
@@ -124,7 +122,7 @@ struct NaClSpringboardInfo {
   uint32_t end_addr;
 };
 
-struct NaClApp {
+struct __attribute__((aligned (1u << 6))) NaClApp {
   /*
    * children table lock children_mu is higher in the locking order than
    * the thread locks, i.e., children_mu must be acqured w/o holding
@@ -480,8 +478,8 @@ struct NaClApp {
   int sc_nprocessors_onln;
 
   const struct NaClValidatorInterface *validator;
-};
 
+};
 
 
 void  NaClAppIncrVerbosity(void);

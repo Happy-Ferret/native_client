@@ -865,8 +865,12 @@ int NaClSelLdrMain(int argc, char **argv) {
 
   NaClLog(1, "%s\n", "Initializing pipe table mutexes/conditional variables.");
   for (size_t i = 0; i < PIPE_NUM_MAX; i++) {
-    NaClXMutexCtor(&pipe_table[i].mu);
-    NaClXCondVarCtor(&pipe_table[i].cv);
+    if (!NaClFastMutexCtor(&pipe_table[i].mu)) {
+      NaClLog(LOG_ERROR, "%s\n", "pipe mutex ctor failed");
+      goto done;
+    }
+    pipe_table[i].xfer_done = true;
+    pipe_table[i].is_closed = false;
   }
 
   NaClLog(1, "%s\n\n", "[NaCl Main Loader] before creation of the cage to run user program!");
@@ -876,8 +880,8 @@ int NaClSelLdrMain(int argc, char **argv) {
                             argc - optind,
                             argv + optind,
                             nap->clean_environ)) {
-     NaClLog(1, "%s\n", "creating main thread failed");
-     goto done;
+    NaClLog(LOG_ERROR, "%s\n", "creating main thread failed");
+    goto done;
   }
   nacl_user_program_begin = clock();
 
