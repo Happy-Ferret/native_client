@@ -4154,14 +4154,16 @@ int32_t NaClSysWaitpid(struct NaClAppThread *natp,
   struct NaClApp *nap = natp->nap;
   struct NaClApp *nap_child = 0;
   uintptr_t sysaddr = NaClUserToSysAddrRange(nap, (uintptr_t)stat_loc, 4);
-  int *stat_loc_ptr = (int *)sysaddr;
+  int *stat_loc_ptr = sysaddr == kNaClBadAddress ? NULL : (int *)sysaddr;
   int pid_max = 0;
   int ret = 0;
 
   NaClLog(1, "%s\n", "[NaClSysWaitpid] entered waitpid!");
 
   CHECK(nap->num_children < NACL_THREAD_MAX);
-  *stat_loc_ptr = 0;
+  if (stat_loc_ptr) {
+    *stat_loc_ptr = 0;
+  }
   for (int i = 0; i < nap->num_children; i++)
     pid_max = pid_max < nap->children_ids[i] ? nap->children_ids[i] : pid_max;
   if (!nap->num_children || cage_id > pid_max) {
@@ -4231,11 +4233,11 @@ int32_t NaClSysWaitpid(struct NaClAppThread *natp,
   }
 
 out:
-  if (nap_child) {
+  if (nap_child && stat_loc_ptr) {
     *stat_loc_ptr = nap_child->exit_status;
   }
   NaClLog(1, "[NaClSysWaitpid] pid = %d \n", cage_id);
-  NaClLog(1, "[NaClSysWaitpid] status = %d \n", *stat_loc_ptr);
+  NaClLog(1, "[NaClSysWaitpid] status = %d \n", stat_loc_ptr ? *stat_loc_ptr : 0);
   NaClLog(1, "[NaClSysWaitpid] options = %d \n", options);
   NaClLog(1, "[NaClSysWaitpid] ret = %d \n", ret);
 
