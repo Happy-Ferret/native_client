@@ -14,6 +14,7 @@
 /*
  * NaCl service run-time, non-platform specific system call helper routines.
  */
+#include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -447,6 +448,16 @@ int32_t NaClSysGetpid(struct NaClAppThread *natp) {
   NaClLog(1, "NaClSysGetpid: returning %d\n", pid);
 
   return pid;
+}
+
+int32_t NaClSysGetppid(struct NaClAppThread *natp) {
+  int32_t ppid;
+  struct NaClApp *nap = natp->nap;
+
+  ppid = nap->parent->cage_id;
+  NaClLog(1, "NaClSysGetpid: returning %d\n", ppid);
+
+  return ppid;
 }
 
 int32_t NaClSysExit(struct NaClAppThread  *natp,
@@ -3960,6 +3971,11 @@ out:
   return ret;
 }
 
+int32_t NaClSysPipe2(struct NaClAppThread *natp, uint32_t *pipedes, int flags) {
+  UNREFERENCED_PARAMETER(flags);
+  return NaClSysPipe(natp, pipedes);
+}
+
 int32_t NaClSysFork(struct NaClAppThread *natp) {
   struct NaClApp *nap = natp->nap;
   struct NaClApp *nap_child = 0;
@@ -4129,9 +4145,9 @@ int32_t NaClSysExecv(struct NaClAppThread  *natp, void *pathname, void *argv) {
 #define WAIT_ANY_PG 0
 
 int32_t NaClSysWaitpid(struct NaClAppThread *natp,
-                       uint32_t pid,
+                       int pid,
                        uint32_t *stat_loc,
-                       uint32_t options) {
+                       int options) {
   volatile int cage_id = pid;
   /* seconds between thread switching */
   NACL_TIMESPEC_T const timeout = {1, 0};
@@ -4226,7 +4242,7 @@ out:
   return ret;
 }
 
-int32_t NaClSysWait(struct NaClAppThread  *natp, uint32_t *stat_loc) {
+int32_t NaClSysWait(struct NaClAppThread *natp, uint32_t *stat_loc) {
   struct NaClApp *nap = natp->nap;
   int ret;
 
@@ -4241,4 +4257,20 @@ int32_t NaClSysWait(struct NaClAppThread  *natp, uint32_t *stat_loc) {
 out:
   NaClLog(1, "[NaClSysWait] ret = %d \n", ret);
   return ret;
+}
+
+int32_t NaClSysWait4(struct NaClAppThread *natp,
+                     int pid,
+                     uint32_t *stat_loc,
+                     int options,
+                     struct rusage *rusage) {
+  UNREFERENCED_PARAMETER(rusage);
+  return NaClSysWaitpid(natp, pid, stat_loc, options);
+}
+
+int32_t NaClSysSigProcMask(struct NaClAppThread *natp, int how, const void *set, void *oldset) {
+  UNREFERENCED_PARAMETER(how);
+  UNREFERENCED_PARAMETER(set);
+  UNREFERENCED_PARAMETER(oldset);
+  return 0;
 }
