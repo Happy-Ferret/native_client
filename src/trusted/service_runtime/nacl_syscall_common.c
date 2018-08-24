@@ -4261,11 +4261,7 @@ out:
   return ret;
 }
 
-int32_t NaClSysWait4(struct NaClAppThread *natp,
-                     int pid,
-                     uint32_t *stat_loc,
-                     int options,
-                     struct rusage *rusage) {
+int32_t NaClSysWait4(struct NaClAppThread *natp, int pid, uint32_t *stat_loc, int options, void *rusage) {
   UNREFERENCED_PARAMETER(rusage);
   return NaClSysWaitpid(natp, pid, stat_loc, options);
 }

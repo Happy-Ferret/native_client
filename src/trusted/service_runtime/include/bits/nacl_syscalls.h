@@ -112,6 +112,7 @@
 #define NACL_sys_test_syscall_2         112
 #define NACL_sys_lind_syscall           113
 
+#define NACL_sys_pipe                   114
 #define NACL_sys_pipe2                  115
 #define NACL_sys_fork                   116
 #define NACL_sys_execv                  117

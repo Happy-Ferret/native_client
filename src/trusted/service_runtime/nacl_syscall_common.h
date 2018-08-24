@@ -315,7 +315,7 @@ int32_t NaClSysExecve(struct NaClAppThread *natp, void* pathname, void* argv, vo
 int32_t NaClSysExecv(struct NaClAppThread *natp, void *pathname, void *argv);
 int32_t NaClSysWaitpid(struct NaClAppThread *natp, int pid, uint32_t *stat_loc, int options);
 int32_t NaClSysWait(struct NaClAppThread *natp, uint32_t *stat_loc);
-int32_t NaClSysWait4(struct NaClAppThread *natp, int pid, uint32_t *stat_loc, int options, struct rusage *rusage);
+int32_t NaClSysWait4(struct NaClAppThread *natp, int pid, uint32_t *stat_loc, int options, void *rusage);
 int32_t NaClSysSigProcMask(struct NaClAppThread *natp, int how, const void *set, void *oldset);
 
 EXTERN_C_END
