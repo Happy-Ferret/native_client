@@ -836,35 +836,35 @@ int32_t NaClSysClose(struct NaClAppThread *natp, int d) {
      goto out;
   }
   fd = fd_cage_table[nap->cage_id][d];
-  NaClFastMutexLock(&pipe_table[fd].mu);
 
   /* don't try to close already closed fds */
-  if (fd < 0 || !pipe_table[fd].xfer_done || pipe_table[fd].is_closed) {
+  if (fd < 0) {
     ret = 0;
     goto out;
   }
-  pipe_table[fd].is_closed = true;
 
   /* Unref the desc_tbl */
   if ((ndp = NaClGetDescMu(nap, fd))) {
     NaClLog(1, "Invoking Close virtual function of object 0x%08"NACL_PRIxPTR"\n", (uintptr_t)ndp);
-    NaClSetDescMu(nap, d, NULL);
+    NaClSetDescMu(nap, fd, NULL);
     NaClDescUnref(ndp);
-    /* invalidate all fd references */
-    for (sig_atomic_t cage_idx = 0; cage_idx < fork_num; cage_idx++) {
-      for (size_t fd_idx = 0; fd_idx < CAGING_FD_NUM; fd_idx++) {
-        if (fd_cage_table[cage_idx][fd_idx] == fd) {
-          fd_cage_table[cage_idx][fd_idx] = -1;
-          /* found the needle so break from the inner loop to the next cage id */
-          break;
-        }
-      }
-    }
+    fd_cage_table[nap->cage_id][d] = -1;
     ret = 0;
+    /* invalidate all fd references */
+    /*
+     * for (sig_atomic_t cage_idx = 0; cage_idx < fork_num; cage_idx++) {
+     *   for (size_t fd_idx = 0; fd_idx < CAGING_FD_NUM; fd_idx++) {
+     *     if (fd_cage_table[cage_idx][fd_idx] == fd) {
+     *       fd_cage_table[cage_idx][fd_idx] = -1;
+     *       [> found the needle so break from the inner loop to the next cage id <]
+     *       break;
+     *     }
+     *   }
+     * }
+     */
   }
 
 out:
-  NaClFastMutexUnlock(&pipe_table[fd].mu);
   NaClFastMutexUnlock(&nap->desc_mu);
   return ret;
 }
@@ -3958,13 +3958,17 @@ int32_t NaClSysPipe(struct NaClAppThread  *natp, uint32_t *pipedes) {
     }
 
     /* setup pipe table entry */
-    NaClFastMutexLock(&pipe_table[pipe_fds[i]].mu);
-    pipe_table[pipe_fds[i]].is_closed = false;
+    /*
+     * NaClFastMutexLock(&pipe_table[pipe_fds[i]].mu);
+     * pipe_table[pipe_fds[i]].is_closed = false;
+     */
     ndp = NaClDescIoDescFromDescAllocCtor(pipe_fds[i], flags);
-    NaClSetDesc(nap, pipe_fds[i], ndp);
+    NaClSetDesc(nap,pipe_fds[i] , ndp);
     fd_cage_table[nap->cage_id][nap->fd] = pipe_fds[i];
     nacl_fds[i] = nap->fd++;
-    NaClFastMutexUnlock(&pipe_table[pipe_fds[i]].mu);
+    /*
+     * NaClFastMutexUnlock(&pipe_table[pipe_fds[i]].mu);
+     */
   }
 
   /* copy out sanitized fds */
@@ -4272,6 +4276,7 @@ int32_t NaClSysWait4(struct NaClAppThread *natp, int pid, uint32_t *stat_loc, in
 }
 
 int32_t NaClSysSigProcMask(struct NaClAppThread *natp, int how, const void *set, void *oldset) {
+  UNREFERENCED_PARAMETER(natp);
   UNREFERENCED_PARAMETER(how);
   UNREFERENCED_PARAMETER(set);
   UNREFERENCED_PARAMETER(oldset);
