@@ -454,9 +454,14 @@ int32_t NaClSysGetppid(struct NaClAppThread *natp) {
   int32_t ppid;
   struct NaClApp *nap = natp->nap;
 
+  if (!nap->parent) {
+    ppid = 0;
+    goto out;
+  }
   ppid = nap->parent->cage_id;
-  NaClLog(1, "NaClSysGetpid: returning %d\n", ppid);
 
+out:
+  NaClLog(1, "NaClSysGetpid: returning %d\n", ppid);
   return ppid;
 }
 
