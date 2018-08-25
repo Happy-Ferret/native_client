@@ -830,7 +830,7 @@ int32_t NaClSysClose(struct NaClAppThread *natp, int d) {
    * FIXME: maybe there is a better way to avoid
    * segfaults trying to close child fds... -jp
    */
-  if (nap->cage_id > 1) {
+  if (nap->cage_id > 1 || d < 3) {
      NaClLog(1, "cage_id: %d\n", nap->cage_id);
      ret = 0;
      goto out;
@@ -846,22 +846,19 @@ int32_t NaClSysClose(struct NaClAppThread *natp, int d) {
   /* Unref the desc_tbl */
   if ((ndp = NaClGetDescMu(nap, fd))) {
     NaClLog(1, "Invoking Close virtual function of object 0x%08"NACL_PRIxPTR"\n", (uintptr_t)ndp);
-    NaClSetDescMu(nap, fd, NULL);
+    NaClSetDescMu(nap, d, NULL);
     NaClDescUnref(ndp);
-    fd_cage_table[nap->cage_id][d] = -1;
-    ret = 0;
     /* invalidate all fd references */
-    /*
-     * for (sig_atomic_t cage_idx = 0; cage_idx < fork_num; cage_idx++) {
-     *   for (size_t fd_idx = 0; fd_idx < CAGING_FD_NUM; fd_idx++) {
-     *     if (fd_cage_table[cage_idx][fd_idx] == fd) {
-     *       fd_cage_table[cage_idx][fd_idx] = -1;
-     *       [> found the needle so break from the inner loop to the next cage id <]
-     *       break;
-     *     }
-     *   }
-     * }
-     */
+    for (sig_atomic_t cage_idx = 0; cage_idx < fork_num; cage_idx++) {
+      for (size_t fd_idx = 0; fd_idx < CAGING_FD_NUM; fd_idx++) {
+        if (fd_cage_table[cage_idx][fd_idx] == fd) {
+          fd_cage_table[cage_idx][fd_idx] = -1;
+          /* found the needle so break from the inner loop to the next cage id */
+          break;
+        }
+      }
+    }
+    ret = 0;
   }
 
 out:
