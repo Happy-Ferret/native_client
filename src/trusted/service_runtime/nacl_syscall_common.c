@@ -4111,17 +4111,30 @@ int32_t NaClSysExecve(struct NaClAppThread  *natp, void *pathname, void *argv, v
   /* TODO: fix dynamic text validation -jp */
   nap_child->skip_validator = 1;
 
-  /* update master nap pointer if parent was original */
+  /* update references to parent nap */
   if (nap_child->cage_id == 1) {
     master_nap = nap_child;
   }
   nap_child->master = master_nap;
+  for (struct NaClApp *nap_cur = master_nap; nap_cur; nap_cur = nap->parent) {
+    NaClLog(1, "[parent nap %d] starting replacement: cage_id = %d\n", nap_cur->cage_id, nap->cage_id);
+    NaClXMutexLock(&nap_cur->children_mu);
+    if (!DynArraySet(&nap_cur->children, nap->cage_id, nap_child)) {
+      NaClLog(LOG_WARNING, "[parent %d] replacement %d failed\n", nap_cur->cage_id, nap->cage_id);
+    }
+    NaClXCondVarBroadcast(&nap_cur->children_cv);
+    NaClXMutexUnlock(&nap_cur->children_mu);
+    /* break after parent's iteration */
+    if (nap_cur == nap->parent) {
+      break;
+    }
+  }
 
   /* execute new binary */
   ret = -NACL_ABI_ENOEXEC;
   NaClLog(1, "binary = %s\n", nap->binary);
   if (!NaClCreateMainThread(nap_child, child_argc, child_argv, nap_child->clean_environ)) {
-    NaClLog(LOG_ERROR, "%s\n", "NaClCreateMainForkThread() failed");
+    NaClLog(LOG_ERROR, "%s\n", "NaClCreateMainThread() failed");
     NaClEnvCleanserDtor(&env_cleanser);
     goto fail;
   }
