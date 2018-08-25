@@ -572,14 +572,14 @@ int32_t NaClSysDup(struct NaClAppThread *natp, int oldfd) {
   }
 
   if (!(old_nd = NaClGetDesc(nap, oldfd))) {
-    ret= -NACL_ABI_EBADF;
-    goto out;
-  }
-  if (newfd > FILE_DESC_MAX) {
     ret = -NACL_ABI_EBADF;
     goto out;
   }
   newfd = NaClSetAvail(nap, old_nd);
+  if (newfd > FILE_DESC_MAX) {
+    ret = -NACL_ABI_EBADF;
+    goto out;
+  }
   fd_cage_table[nap->cage_id][newfd] = fd_cage_table[nap->cage_id][oldfd];
   if (nap->fd <= newfd) {
     nap->fd = newfd + 1;
@@ -4106,8 +4106,7 @@ int32_t NaClSysExecve(struct NaClAppThread  *natp, void *pathname, void *argv, v
   nap_child->cage_id = nap->cage_id;
   nap_child->parent_id = nap->parent_id;
   nap_child->num_children = nap->num_children;
-  memcpy(&nap_child->children, &nap->children, sizeof nap->children);
-  memcpy((void *)nap_child->children_ids, (void *)nap->children_ids, sizeof nap->children_ids);
+
   /* TODO: fix dynamic text validation -jp */
   nap_child->skip_validator = 1;
 
@@ -4117,6 +4116,9 @@ int32_t NaClSysExecve(struct NaClAppThread  *natp, void *pathname, void *argv, v
   }
   nap_child->master = master_nap;
   for (struct NaClApp *nap_cur = master_nap; nap_cur; nap_cur = nap->parent) {
+    if (nap_cur == nap) {
+      continue;
+    }
     NaClLog(1, "[parent nap %d] starting replacement: cage_id = %d\n", nap_cur->cage_id, nap->cage_id);
     NaClXMutexLock(&nap_cur->children_mu);
     if (!DynArraySet(&nap_cur->children, nap->cage_id, nap_child)) {
@@ -4129,6 +4131,8 @@ int32_t NaClSysExecve(struct NaClAppThread  *natp, void *pathname, void *argv, v
       break;
     }
   }
+  memcpy(&nap_child->children, &nap->children, sizeof nap->children);
+  memcpy((void *)nap_child->children_ids, (void *)nap->children_ids, sizeof nap->children_ids);
 
   /* execute new binary */
   ret = -NACL_ABI_ENOEXEC;
