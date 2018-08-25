@@ -560,7 +560,8 @@ int32_t NaClSysNameService(struct NaClAppThread *natp,
 int32_t NaClSysDup(struct NaClAppThread *natp, int oldfd) {
   struct NaClApp *nap = natp->nap;
   struct NaClDesc *old_nd;
-  int newfd;
+  int old_desc;
+  int new_desc;
   int ret;
 
   NaClLog(1, "NaClSysDup(0x%08"NACL_PRIxPTR", %d)\n", (uintptr_t)natp, oldfd);
@@ -575,13 +576,14 @@ int32_t NaClSysDup(struct NaClAppThread *natp, int oldfd) {
     ret = -NACL_ABI_EBADF;
     goto out;
   }
-  if (!(old_nd = NaClGetDesc(nap, oldfd))) {
+  old_desc = fd_cage_table[nap->cage_id][oldfd];
+  if (!(old_nd = NaClGetDesc(nap, old_desc))) {
     ret= -NACL_ABI_EBADF;
     goto out;
   }
-  ret = newfd = NaClSetAvail(nap, old_nd);
-  fd_cage_table[nap->cage_id][newfd] = fd_cage_table[nap->cage_id][oldfd];
-  nap->fd++;
+  new_desc = NaClSetAvail(nap, old_nd);
+  fd_cage_table[nap->cage_id][nap->fd] = new_desc;
+  ret = nap->fd++;
 
 out:
   return ret;
@@ -592,6 +594,8 @@ int32_t NaClSysDup2(struct NaClAppThread  *natp,
                     int                   newfd) {
   struct NaClApp *nap = natp->nap;
   struct NaClDesc *old_nd;
+  int old_desc;
+  int new_desc;
   int ret;
 
   NaClLog(1, "%s\n", "[dup2] Entered dup2!");
@@ -613,26 +617,28 @@ int32_t NaClSysDup2(struct NaClAppThread  *natp,
     ret = -NACL_ABI_EBADF;
     goto out;
   }
-  if (!(old_nd = NaClGetDesc(nap, oldfd))) {
+  old_desc = fd_cage_table[nap->cage_id][oldfd];
+  if (!(old_nd = NaClGetDesc(nap, old_desc))) {
     ret= -NACL_ABI_EBADF;
     goto out;
   }
-  NaClSetDesc(nap, newfd, old_nd);
-  fd_cage_table[nap->cage_id][newfd] = fd_cage_table[nap->cage_id][oldfd];
-  ret = newfd;
-  nap->fd++;
+  new_desc = NaClSetAvail(nap, old_nd);
+  fd_cage_table[nap->cage_id][newfd] = new_desc;
+  nap->fd = newfd;
+  ret = nap->fd++;
 
 out:
   return ret;
 }
 
-// yiwen: my dup3 implementation
 int32_t NaClSysDup3(struct NaClAppThread  *natp,
                     int                   oldfd,
                     int                   newfd,
                     int                   flags) {
   struct NaClApp *nap = natp->nap;
   struct NaClDesc *old_nd;
+  int old_desc;
+  int new_desc;
   int ret;
 
   NaClLog(1, "%s\n", "[dup3] Entered dup3!");
@@ -659,14 +665,15 @@ int32_t NaClSysDup3(struct NaClAppThread  *natp,
     ret = -NACL_ABI_EBADF;
     goto out;
   }
-  if (!(old_nd = NaClGetDesc(nap, oldfd))) {
+  old_desc = fd_cage_table[nap->cage_id][oldfd];
+  if (!(old_nd = NaClGetDesc(nap, old_desc))) {
     ret= -NACL_ABI_EBADF;
     goto out;
   }
-  NaClSetDesc(nap, newfd, old_nd);
-  fd_cage_table[nap->cage_id][nap->fd] = fd_cage_table[nap->cage_id][oldfd];
-  ret = newfd;
-  nap->fd++;
+  new_desc = NaClSetAvail(nap, old_nd);
+  fd_cage_table[nap->cage_id][newfd] = new_desc;
+  nap->fd = newfd;
+  ret = nap->fd++;
 
 out:
   return ret;
@@ -830,7 +837,7 @@ int32_t NaClSysClose(struct NaClAppThread *natp, int d) {
    * FIXME: maybe there is a better way to avoid
    * segfaults trying to close child fds... -jp
    */
-  if (nap->cage_id > 1 || d < 3) {
+  if (nap->cage_id != 1) {
      NaClLog(1, "cage_id: %d\n", nap->cage_id);
      ret = 0;
      goto out;
@@ -839,7 +846,7 @@ int32_t NaClSysClose(struct NaClAppThread *natp, int d) {
 
   /* don't try to close already closed fds */
   if (fd < 0) {
-    ret = 0;
+    ret = -NACL_ABI_EBADF;
     goto out;
   }
 
@@ -848,7 +855,7 @@ int32_t NaClSysClose(struct NaClAppThread *natp, int d) {
     NaClLog(1, "Invoking Close virtual function of object 0x%08"NACL_PRIxPTR"\n", (uintptr_t)ndp);
     NaClSetDescMu(nap, d, NULL);
     NaClDescUnref(ndp);
-    fd_cage_table[nap->cage_id][d] = -1;
+    /* fd_cage_table[nap->cage_id][d] = -1; */
     ret = 0;
   }
 
@@ -3946,17 +3953,10 @@ int32_t NaClSysPipe(struct NaClAppThread  *natp, uint32_t *pipedes) {
     }
 
     /* setup pipe table entry */
-    /*
-     * NaClFastMutexLock(&pipe_table[pipe_fds[i]].mu);
-     * pipe_table[pipe_fds[i]].is_closed = false;
-     */
     ndp = NaClDescIoDescFromDescAllocCtor(pipe_fds[i], flags);
     NaClSetDesc(nap,pipe_fds[i] , ndp);
     fd_cage_table[nap->cage_id][nap->fd] = pipe_fds[i];
     nacl_fds[i] = nap->fd++;
-    /*
-     * NaClFastMutexUnlock(&pipe_table[pipe_fds[i]].mu);
-     */
   }
 
   /* copy out sanitized fds */
