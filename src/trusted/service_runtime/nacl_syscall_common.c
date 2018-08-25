@@ -848,16 +848,7 @@ int32_t NaClSysClose(struct NaClAppThread *natp, int d) {
     NaClLog(1, "Invoking Close virtual function of object 0x%08"NACL_PRIxPTR"\n", (uintptr_t)ndp);
     NaClSetDescMu(nap, d, NULL);
     NaClDescUnref(ndp);
-    /* invalidate all fd references */
-    for (sig_atomic_t cage_idx = 0; cage_idx < fork_num; cage_idx++) {
-      for (size_t fd_idx = 0; fd_idx < CAGING_FD_NUM; fd_idx++) {
-        if (fd_cage_table[cage_idx][fd_idx] == fd) {
-          fd_cage_table[cage_idx][fd_idx] = -1;
-          /* found the needle so break from the inner loop to the next cage id */
-          break;
-        }
-      }
-    }
+    fd_cage_table[nap->cage_id][d] = -1;
     ret = 0;
   }
 
