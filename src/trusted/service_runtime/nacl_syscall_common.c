@@ -4133,8 +4133,8 @@ int32_t NaClSysExecve(struct NaClAppThread  *natp, void *pathname, void *argv, v
   /* execute new binary */
   ret = -NACL_ABI_ENOEXEC;
   NaClLog(1, "binary = %s\n", nap->binary);
-  if (!NaClCreateMainThread(nap_child, child_argc, child_argv, nap_child->clean_environ)) {
-    NaClLog(LOG_ERROR, "%s\n", "NaClCreateMainThread() failed");
+  if (!NaClCreateMainForkThread(nap, natp, nap_child, child_argc, child_argv, nap_child->clean_environ)) {
+    NaClLog(LOG_ERROR, "%s\n", "NaClCreateMainForkThread() failed");
     NaClEnvCleanserDtor(&env_cleanser);
     goto fail;
   }
