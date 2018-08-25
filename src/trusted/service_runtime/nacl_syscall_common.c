@@ -4138,8 +4138,9 @@ int32_t NaClSysExecve(struct NaClAppThread  *natp, void *pathname, void *argv, v
     NaClEnvCleanserDtor(&env_cleanser);
     goto fail;
   }
+  /* avoid cleanup */
   NaClReportExitStatus(nap, NACL_ABI_W_EXITCODE(0, 0));
-  NaClAppThreadTeardown(natp);
+  NaClThreadExit();
 
   /* NOTREACHED */
   ret = -NACL_ABI_EINVAL;
