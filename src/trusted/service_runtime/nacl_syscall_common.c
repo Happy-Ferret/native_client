@@ -4102,8 +4102,20 @@ int32_t NaClSysExecve(struct NaClAppThread  *natp, void *pathname, void *argv, v
   NaClLogThreadContext(natp);
   nap_child = NaClChildNapCtor(nap);
   nap_child->running = 0;
+  nap_child->parent = nap->parent;
+  nap_child->cage_id = nap->cage_id;
+  nap_child->parent_id = nap->parent_id;
+  nap_child->num_children = nap->num_children;
+  memcpy(&nap_child->children, &nap->children, sizeof nap->children);
+  memcpy((void *)nap_child->children_ids, (void *)nap->children_ids, sizeof nap->children_ids);
   /* TODO: fix dynamic text validation -jp */
   nap_child->skip_validator = 1;
+
+  /* update master nap pointer if parent was original */
+  if (nap_child->cage_id == 1) {
+    master_nap = nap_child;
+  }
+  nap_child->master = master_nap;
 
   /* execute new binary */
   ret = -NACL_ABI_ENOEXEC;
@@ -4113,12 +4125,11 @@ int32_t NaClSysExecve(struct NaClAppThread  *natp, void *pathname, void *argv, v
     NaClEnvCleanserDtor(&env_cleanser);
     goto fail;
   }
-  /* wait for child to finish before cleaning up */
-  NaClReportExitStatus(nap, 0);
+  NaClReportExitStatus(nap, NACL_ABI_W_EXITCODE(0, 0));
   NaClAppThreadTeardown(natp);
 
-  /* success */
-  ret = 0;
+  /* NOTREACHED */
+  ret = -NACL_ABI_EINVAL;
 
 fail:
   for (char **pp = new_envp; pp && *pp; pp++) {

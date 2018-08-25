@@ -48,15 +48,6 @@
 #include "native_client/src/trusted/service_runtime/sel_util.h"
 #include "native_client/src/trusted/service_runtime/sel_addrspace.h"
 
-
-/*
- * always points at original program context
- *
- * -jp
- */
-struct NaClThreadContext *master_ctx;
-
-
 /*
  * Fill from static_text_end to end of that page with halt
  * instruction, which is at least NACL_HALT_LEN in size when no

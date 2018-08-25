@@ -79,9 +79,10 @@ struct NaClMutex;
 struct NaClApp;
 
 /*
- * always points at original program context
+ * always points at master program context
  */
 extern struct NaClThreadContext *master_ctx;
+extern struct NaClApp *master_nap;
 
 extern int nacl_syscall_counter;
 extern int nacl_syscall_invoked_times[NACL_MAX_SYSCALLS];
