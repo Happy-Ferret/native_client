@@ -747,7 +747,8 @@ StubType stubs[] = {
         {LindEpollWaitPreprocess, LindEpollWaitPostprocess, 0}, /* 58 epoll_wait */
         {LindCommonPreprocess, 0, 0}, /* 59 sendmsg */
         {LindCommonPreprocess, 0, 0}, /* 60 */
-        {0} /* 61 LIND_sys_pipe */
+        {0}, /* 61 LIND_sys_pipe */
+        {0} /* 62 LIND_sys_pipe2 */
 };
 
 
@@ -849,21 +850,6 @@ int32_t NaClSysLindSyscall(struct NaClAppThread *natp,
                 retval = -NACL_ABI_EFAULT;
                 goto cleanup;
         }
-    }
-
-    /* yiwen: handle lind_pipe here.
-     *        the pipe() call should initialize the pipe buffer
-     *        and returns two fds for the pipe
-     */
-    if (callNum == 61) {
-        int data[2] = {9001, 9002};
-        int len = 8;
-        int error = NaClCopyOutToUser(nap, (uintptr_t)outArgSys[0].ptr, data, len);
-        if (!error) {
-            NaClLog(LOG_ERROR, "NaClCopyOutToUser: failed! \n");
-        }
-        retval = 0;
-        goto cleanup;
     }
 
     if (stubs[callNum].pre) {
